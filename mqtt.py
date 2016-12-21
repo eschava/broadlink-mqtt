@@ -40,32 +40,17 @@ def on_message(mosq, device, msg):
     logging.debug("Received MQTT message " + msg.topic + " " + str(msg.payload))
     command = msg.topic[len(topic_prefix):]
     file = "commands/" + command
+    action = str(msg.payload)
 
     try:
-        if os.path.isfile(file):
-            with open(file, 'rb') as f:
-                ir_packet = f.read()
-            device.send_data(ir_packet.decode('hex'))
+        if action == '' or action == 'auto':
+            record_or_replay(device, file)
+        elif action == 'record':
+            record(device, file)
+        elif action == 'replay':
+            replay(device, file)
         else:
-            logging.debug("Recording command to file " + file)
-            # receive packet
-            device.enter_learning()
-            ir_packet = None
-            attempt = 0
-            while ir_packet is None and attempt < 6:
-                time.sleep(5)
-                ir_packet = device.check_data()
-                attempt = attempt + 1
-            if ir_packet is not None:
-                # write to file
-                directory = os.path.dirname(file)
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
-                with open(file, 'wb') as f:
-                    f.write(str(ir_packet).encode('hex'))
-                logging.debug("Done")
-            else:
-                logging.warn("No command received")
+            logging.debug("Unrecognized MQTT message " + action)
     except Exception:
         logging.exception("I/O error")
 
@@ -83,11 +68,47 @@ def on_disconnect(mosq, device, rc):
     time.sleep(10)
 
 
+def record_or_replay(device, file):
+    if os.path.isfile(file):
+        replay(device, file)
+    else:
+        record(device, file)
+
+
+def record(device, file):
+    logging.debug("Recording command to file " + file)
+    # receive packet
+    device.enter_learning()
+    ir_packet = None
+    attempt = 0
+    while ir_packet is None and attempt < 6:
+        time.sleep(5)
+        ir_packet = device.check_data()
+        attempt = attempt + 1
+    if ir_packet is not None:
+        # write to file
+        directory = os.path.dirname(file)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(file, 'wb') as f:
+            f.write(str(ir_packet).encode('hex'))
+        logging.debug("Done")
+    else:
+        logging.warn("No command received")
+
+
+def replay(device, file):
+    logging.debug("Replaying command from file " + file)
+    with open(file, 'rb') as f:
+        ir_packet = f.read()
+    device.send_data(ir_packet.decode('hex'))
+
+
 if __name__ == '__main__':
     local_address = cf.get('local_address', None)
-    timeout = 20
-    devices = broadlink.discover(timeout=timeout) if local_address is None else \
-        broadlink.discover(timeout=timeout, local_ip_address=local_address)
+    lookup_timeout = cf.get('lookup_timeout', 20)
+    devices = broadlink.discover(timeout=lookup_timeout) if local_address is None else \
+        broadlink.discover(timeout=lookup_timeout, local_ip_address=local_address)
     if len(devices) == 0:
         logging.error('No Broadlink device found')
         sys.exit(2)
