@@ -19,8 +19,12 @@ class Config(object):
         self.config = {}
         execfile(filename, self.config)
 
-    def get(self, key, default=None):
-        return self.config.get(key, default)
+    def get(self, key, default='special empty value'):
+        v = self.config.get(key, default)
+        if v == 'special empty value':
+            logging.error("Configuration parameter '%s' should be specified" % key)
+            sys.exit(2)
+        return v
 
 
 try:
@@ -104,19 +108,38 @@ def replay(device, file):
     device.send_data(ir_packet.decode('hex'))
 
 
+def get_device(cf):
+    device_type = cf.get('device_type', 'lookup')
+    if device_type == 'lookup':
+        local_address = cf.get('local_address', None)
+        lookup_timeout = cf.get('lookup_timeout', 20)
+        devices = broadlink.discover(timeout=lookup_timeout) if local_address is None else \
+            broadlink.discover(timeout=lookup_timeout, local_ip_address=local_address)
+        if len(devices) == 0:
+            logging.error('No Broadlink device found')
+            sys.exit(2)
+        if len(devices) > 1:
+            logging.error('More than one Broadlink device found (' + ', '.join([d.host for d in devices]) + ')')
+            sys.exit(2)
+        return devices[0]
+    else:
+        host = (cf.get('device_host'), 80)
+        mac = bytearray.fromhex(cf.get('device_mac').replace(':', ' '))
+        if device_type == 'rm':
+            return broadlink.rm(host=host, mac=mac)
+        elif device_type == 'sp1':
+            return broadlink.sp1(host=host, mac=mac)
+        elif device_type == 'sp2':
+            return broadlink.sp2(host=host, mac=mac)
+        elif device_type == 'a1':
+            return broadlink.a1(host=host, mac=mac)
+        else:
+            logging.error('Incorrect device configured: ' + device_type)
+            sys.exit(2)
+
+
 if __name__ == '__main__':
-    local_address = cf.get('local_address', None)
-    lookup_timeout = cf.get('lookup_timeout', 20)
-    devices = broadlink.discover(timeout=lookup_timeout) if local_address is None else \
-        broadlink.discover(timeout=lookup_timeout, local_ip_address=local_address)
-    if len(devices) == 0:
-        logging.error('No Broadlink device found')
-        sys.exit(2)
-    if len(devices) > 1:
-        logging.error('More than one Broadlink device found (' + ', '.join([d.host for d in devices]) + ')')
-        sys.exit(2)
-        
-    device = devices[0]
+    device = get_device(cf)
     device.auth()
     logging.debug('Connected to %s Broadlink device at %s' % (device.type, device.host))
 
