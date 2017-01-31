@@ -10,8 +10,9 @@ import logging.config
 import socket
 
 # read initial config files
-logging.config.fileConfig('logging.conf')
-CONFIG = os.getenv('BROADLINKMQTTCONFIG', 'mqtt.conf')
+dirname = os.path.dirname(os.path.abspath(__file__))
+logging.config.fileConfig(dirname + '/logging.conf')
+CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + '/mqtt.conf')
 
 
 class Config(object):
