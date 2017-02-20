@@ -8,6 +8,7 @@ import time
 import logging
 import logging.config
 import socket
+import sched
 
 # read initial config files
 dirname = os.path.dirname(os.path.abspath(__file__))
@@ -139,6 +140,13 @@ def get_device(cf):
             sys.exit(2)
 
 
+def broadlink_rm_temperature_timer(scheduler, device):
+    scheduler.enter(delay, 1, broadlink_rm_temperature_timer, [scheduler, device])
+
+    temperature = device.check_temperature()
+    mqttc.publish(topic_prefix + "temperature", str(temperature), qos=qos, retain=retain)
+
+
 if __name__ == '__main__':
     device = get_device(cf)
     device.auth()
@@ -159,6 +167,11 @@ if __name__ == '__main__':
 
     mqttc.username_pw_set(cf.get('mqtt_username'), cf.get('mqtt_password'))
     mqttc.connect(cf.get('mqtt_broker', 'localhost'), int(cf.get('mqtt_port', '1883')), 60)
+
+    broadlink_rm_temperature_interval = cf.get('broadlink_rm_temperature_interval', 0)
+    if broadlink_rm_temperature_interval > 0:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer, [scheduler, device])
 
     while True:
         try:
