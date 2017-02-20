@@ -9,6 +9,7 @@ import logging
 import logging.config
 import socket
 import sched
+from threading import Thread
 
 # read initial config files
 dirname = os.path.dirname(os.path.abspath(__file__))
@@ -43,8 +44,11 @@ topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
 
 # noinspection PyUnusedLocal
 def on_message(mosq, device, msg):
-    logging.debug("Received MQTT message " + msg.topic + " " + str(msg.payload))
     command = msg.topic[len(topic_prefix):]
+    if command == 'temperature':  # internal notification
+        return
+
+    logging.debug("Received MQTT message " + msg.topic + " " + str(msg.payload))
     file = "commands/" + command
     action = str(msg.payload)
 
@@ -124,6 +128,15 @@ def get_device(cf):
             logging.error('More than one Broadlink device found (' + ', '.join([d.host for d in devices]) + ')')
             sys.exit(2)
         return devices[0]
+    elif device_type == 'test':
+        class TestDevice:
+            type = 'test'
+            host = 'test'
+            def auth(self):
+                pass
+            def check_temperature(self):
+                return 23.5
+        return TestDevice()
     else:
         host = (cf.get('device_host'), 80)
         mac = bytearray.fromhex(cf.get('device_mac').replace(':', ' '))
@@ -140,11 +153,22 @@ def get_device(cf):
             sys.exit(2)
 
 
-def broadlink_rm_temperature_timer(scheduler, device):
-    scheduler.enter(delay, 1, broadlink_rm_temperature_timer, [scheduler, device])
+def broadlink_rm_temperature_timer(scheduler, delay, device):
+    scheduler.enter(delay, 1, broadlink_rm_temperature_timer, [scheduler, delay, device])
 
-    temperature = device.check_temperature()
-    mqttc.publish(topic_prefix + "temperature", str(temperature), qos=qos, retain=retain)
+    temperature = str(device.check_temperature())
+    topic = topic_prefix + "temperature"
+    logging.debug("Sending RM temperature " + temperature + " to topic " + topic)
+    mqttc.publish(topic, temperature, qos=qos, retain=retain)
+
+
+class TimerThread(Thread):
+    def __init__(self, s):
+        Thread.__init__(self)
+        self.s = s
+
+    def run(self):
+        self.s.run()
 
 
 if __name__ == '__main__':
@@ -171,7 +195,11 @@ if __name__ == '__main__':
     broadlink_rm_temperature_interval = cf.get('broadlink_rm_temperature_interval', 0)
     if broadlink_rm_temperature_interval > 0:
         scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer, [scheduler, device])
+        scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer, [scheduler, broadlink_rm_temperature_interval, device])
+        # scheduler.run()
+        tt = TimerThread(scheduler)
+        tt.daemon = True
+        tt.start()
 
     while True:
         try:
