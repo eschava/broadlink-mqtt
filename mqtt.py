@@ -12,9 +12,9 @@ import sched
 from threading import Thread
 
 # read initial config files
-dirname = os.path.dirname(os.path.abspath(__file__))
-logging.config.fileConfig(dirname + '/logging.conf')
-CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + '/mqtt.conf')
+dirname = os.path.dirname(os.path.abspath(__file__)) + '/'
+logging.config.fileConfig(dirname + 'logging.conf')
+CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + 'mqtt.conf')
 
 
 class Config(object):
@@ -49,7 +49,7 @@ def on_message(mosq, device, msg):
         return
 
     logging.debug("Received MQTT message " + msg.topic + " " + str(msg.payload))
-    file = "commands/" + command
+    file = dirname + "commands/" + command
     action = str(msg.payload)
 
     try:
