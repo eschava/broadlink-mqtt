@@ -47,6 +47,10 @@ def on_message(mosq, device, msg):
     command = msg.topic[len(topic_prefix):]
     if command == 'temperature':  # internal notification
         return
+    if command == 'power':
+        if device.type == 'SP1' or device.type == 'SP2':
+            device.set_power(1 if msg.payload == 'on' else 0)
+            return
 
     logging.debug("Received MQTT message " + msg.topic + " " + str(msg.payload))
     file = dirname + "commands/" + command
