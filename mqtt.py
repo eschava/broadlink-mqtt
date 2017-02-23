@@ -148,6 +148,8 @@ def get_device(cf):
             return broadlink.sp2(host=host, mac=mac)
         elif device_type == 'a1':
             return broadlink.a1(host=host, mac=mac)
+        elif device_type == 'mp1':
+            return broadlink.mp1(host=host, mac=mac)
         else:
             logging.error('Incorrect device configured: ' + device_type)
             sys.exit(2)
