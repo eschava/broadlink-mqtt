@@ -45,28 +45,46 @@ topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
 # noinspection PyUnusedLocal
 def on_message(mosq, device, msg):
     command = msg.topic[len(topic_prefix):]
+
     if command == 'temperature':  # internal notification
         return
+
+    action = str(msg.payload)
+    logging.debug("Received MQTT message " + msg.topic + " " + action)
+
     if command == 'power':
         if device.type == 'SP1' or device.type == 'SP2':
-            device.set_power(1 if msg.payload == 'on' else 0)
+            state = action == 'on'
+            logging.debug("Setting power state to {0}".format(state))
+            device.set_power(1 if state else 0)
             return
 
-    logging.debug("Received MQTT message " + msg.topic + " " + str(msg.payload))
-    file = dirname + "commands/" + command
-    action = str(msg.payload)
+        if device.type == 'MP1':
+            parts = action.split("/", 2)
+            if len(parts) == 2:
+                sid = int(parts[0])
+                state = parts[1] == 'on'
+                logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
+                device.set_power(sid, state)
+                return
 
-    try:
-        if action == '' or action == 'auto':
-            record_or_replay(device, file)
-        elif action == 'record':
-            record(device, file)
-        elif action == 'replay':
-            replay(device, file)
-        else:
-            logging.debug("Unrecognized MQTT message " + action)
-    except Exception:
-        logging.exception("I/O error")
+    if device.type == 'RM2':
+        file = dirname + "commands/" + command
+
+        try:
+            if action == '' or action == 'auto':
+                record_or_replay(device, file)
+                return
+            elif action == 'record':
+                record(device, file)
+                return
+            elif action == 'replay':
+                replay(device, file)
+                return
+        except Exception:
+            logging.exception("I/O error")
+
+    logging.debug("Unrecognized MQTT message " + action)
 
 
 # noinspection PyUnusedLocal
@@ -168,13 +186,16 @@ def broadlink_rm_temperature_timer(scheduler, delay, device):
     mqttc.publish(topic, temperature, qos=qos, retain=retain)
 
 
-class TimerThread(Thread):
-    def __init__(self, s):
+class SchedulerThread(Thread):
+    def __init__(self, scheduler):
         Thread.__init__(self)
-        self.s = s
+        self.scheduler = scheduler
 
     def run(self):
-        self.s.run()
+        try:
+            self.scheduler.run()
+        except:
+            logging.exception("Error")
 
 
 if __name__ == '__main__':
@@ -199,11 +220,12 @@ if __name__ == '__main__':
     mqttc.connect(cf.get('mqtt_broker', 'localhost'), int(cf.get('mqtt_port', '1883')), 60)
 
     broadlink_rm_temperature_interval = cf.get('broadlink_rm_temperature_interval', 0)
-    if broadlink_rm_temperature_interval > 0:
+    if device.type == 'RM2' and broadlink_rm_temperature_interval > 0:
         scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer, [scheduler, broadlink_rm_temperature_interval, device])
+        scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer,
+                        [scheduler, broadlink_rm_temperature_interval, device])
         # scheduler.run()
-        tt = TimerThread(scheduler)
+        tt = SchedulerThread(scheduler)
         tt.daemon = True
         tt.start()
 
@@ -214,3 +236,6 @@ if __name__ == '__main__':
             time.sleep(5)
         except KeyboardInterrupt:
             sys.exit(0)
+        except:
+            logging.exception("Error")
+
