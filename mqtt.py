@@ -49,29 +49,29 @@ def on_message(mosq, device, msg):
     if command == 'temperature':  # internal notification
         return
 
-    action = str(msg.payload)
-    logging.debug("Received MQTT message " + msg.topic + " " + action)
+    try:
+        action = str(msg.payload)
+        logging.debug("Received MQTT message " + msg.topic + " " + action)
 
-    if command == 'power':
-        if device.type == 'SP1' or device.type == 'SP2':
-            state = action == 'on'
-            logging.debug("Setting power state to {0}".format(state))
-            device.set_power(1 if state else 0)
-            return
-
-        if device.type == 'MP1':
-            parts = action.split("/", 2)
-            if len(parts) == 2:
-                sid = int(parts[0])
-                state = parts[1] == 'on'
-                logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
-                device.set_power(sid, state)
+        if command == 'power':
+            if device.type == 'SP1' or device.type == 'SP2':
+                state = action == 'on'
+                logging.debug("Setting power state to {0}".format(state))
+                device.set_power(1 if state else 0)
                 return
 
-    if device.type == 'RM2':
-        file = dirname + "commands/" + command
+            if device.type == 'MP1':
+                parts = action.split("/", 2)
+                if len(parts) == 2:
+                    sid = int(parts[0])
+                    state = parts[1] == 'on'
+                    logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
+                    device.set_power(sid, state)
+                    return
 
-        try:
+        if device.type == 'RM2':
+            file = dirname + "commands/" + command
+
             if action == '' or action == 'auto':
                 record_or_replay(device, file)
                 return
@@ -81,10 +81,10 @@ def on_message(mosq, device, msg):
             elif action == 'replay':
                 replay(device, file)
                 return
-        except Exception:
-            logging.exception("I/O error")
 
-    logging.debug("Unrecognized MQTT message " + action)
+        logging.debug("Unrecognized MQTT message " + action)
+    except Exception:
+        logging.exception("Error")
 
 
 # noinspection PyUnusedLocal
