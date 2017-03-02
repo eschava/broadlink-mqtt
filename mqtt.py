@@ -180,10 +180,13 @@ def get_device(cf):
 def broadlink_rm_temperature_timer(scheduler, delay, device):
     scheduler.enter(delay, 1, broadlink_rm_temperature_timer, [scheduler, delay, device])
 
-    temperature = str(device.check_temperature())
-    topic = topic_prefix + "temperature"
-    logging.debug("Sending RM temperature " + temperature + " to topic " + topic)
-    mqttc.publish(topic, temperature, qos=qos, retain=retain)
+    try:
+        temperature = str(device.check_temperature())
+        topic = topic_prefix + "temperature"
+        logging.debug("Sending RM temperature " + temperature + " to topic " + topic)
+        mqttc.publish(topic, temperature, qos=qos, retain=retain)
+    except:
+        logging.exception("Error")
 
 
 class SchedulerThread(Thread):
