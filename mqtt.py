@@ -10,6 +10,7 @@ import logging.config
 import socket
 import sched
 from threading import Thread
+from test import TestDevice
 
 # read initial config files
 dirname = os.path.dirname(os.path.abspath(__file__)) + '/'
@@ -81,6 +82,10 @@ def on_message(mosq, device, msg):
             elif action == 'replay':
                 replay(device, file)
                 return
+            elif action == 'macro':
+                file = dirname + "macros/" + command
+                macro(device, file)
+                return
 
         logging.debug("Unrecognized MQTT message " + action)
     except Exception:
@@ -136,6 +141,22 @@ def replay(device, file):
     device.send_data(ir_packet.decode('hex'))
 
 
+def macro(device, file):
+    logging.debug("Replaying macro from file " + file)
+    with open(file, 'rb') as f:
+        for line in f:
+            line = line.strip(' \n\r\t')
+            if len(line) == 0 or line.startswith("#"):
+                continue
+            if line.startswith("pause "):
+                pause = int(line[6:].strip())
+                logging.debug("Pause for " + str(pause) + " milliseconds")
+                time.sleep(pause / 1000.0)
+            else:
+                command_file = dirname + "commands/" + line
+                replay(device, command_file)
+
+
 def get_device(cf):
     device_type = cf.get('device_type', 'lookup')
     if device_type == 'lookup':
@@ -151,14 +172,7 @@ def get_device(cf):
             sys.exit(2)
         return devices[0]
     elif device_type == 'test':
-        class TestDevice:
-            type = 'test'
-            host = 'test'
-            def auth(self):
-                pass
-            def check_temperature(self):
-                return 23.5
-        return TestDevice()
+        return TestDevice(cf)
     else:
         host = (cf.get('device_host'), 80)
         mac = bytearray.fromhex(cf.get('device_mac').replace(':', ' '))

@@ -6,7 +6,8 @@ Install required Python modules using
 
 ## Configuration
 All configurable parameters are present in `mqtt.conf` file  
-Recorded commands are saved under the `commands/` folder
+Recorded commands are saved under the `commands/` folder  
+Macros are saved under the `macros/` folder
 
 ## Start
 Just start `mqtt.py` script using Python interpreter
@@ -31,6 +32,17 @@ Smart mode means that if file with command doesn't exist it will be recorded.
 Every next execution of the command will replay it.  
 This mode is very convenient for home automation systems.  
 To start smart mode need to send empty string or `auto` to the command topic   
-Example:  
+**Example:**  
 first time: `auto` -> `broadlink/tv/samsung/power` records command  
 every next time: `auto` -> `broadlink/tv/samsung/power` replays command  
+
+###Macros
+Macros are created to send several IR signals for single MQTT message.  
+To start macros execution send `macro` message to the topic `broadlink/MACRO_ID`,  
+where `MACRO_ID` is a path to scenario file in `macros/` folder.  
+
+Macros scenario file could contain:
+ - IR commands (same as `COMMAND_ID` in replay mode)
+ - pause instructions (`pause DELAY_IN_MILLISECONDS`)
+ - comments (lines started with `#`)
+ 
