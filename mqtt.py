@@ -93,7 +93,7 @@ def on_message(mosq, device, msg):
 
 
 # noinspection PyUnusedLocal
-def on_connect(mosq, device, result_code):
+def on_connect(mosq, ud, device, result_code): #Fix for paho-mqtt 1.3.0 update / TypeError: on_connect() takes exactly 3 arguments (4 given) / self.on_connect(self, self._userdata, flags_dict, result)
     topic = topic_prefix + '#'
     logging.debug("Connected to MQTT broker, subscribing to topic " + topic)
     mqttc.subscribe(topic, qos)
