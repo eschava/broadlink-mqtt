@@ -44,7 +44,7 @@ topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
 
 
 # noinspection PyUnusedLocal
-def on_message(mosq, device, msg):
+def on_message(client, device, msg):
     command = msg.topic[len(topic_prefix):]
 
     if command == 'temperature':  # internal notification
@@ -93,14 +93,14 @@ def on_message(mosq, device, msg):
 
 
 # noinspection PyUnusedLocal
-def on_connect(mosq, device, result_code):
+def on_connect(client, device, flags, result_code):
     topic = topic_prefix + '#'
     logging.debug("Connected to MQTT broker, subscribing to topic " + topic)
     mqttc.subscribe(topic, qos)
 
 
 # noinspection PyUnusedLocal
-def on_disconnect(mosq, device, rc):
+def on_disconnect(client, device, rc):
     logging.debug("OOOOPS! Broadlink disconnects")
     time.sleep(10)
 
