@@ -9,6 +9,17 @@ All configurable parameters are present in `mqtt.conf` file
 Recorded commands are saved under the `commands/` folder  
 Macros are saved under the `macros/` folder
 
+New config device type of 'list'  requires 
+device_host_1 = '192.168.1.x'
+device_mac_1  = '34:ea:34:xx:xx:xx'
+device_type_1 = 'rm'
+device_host_2 = 
+
+etc.
+When posting a message to one fo these devices, add the mac id after the mqtt_topic_prefix
+eg: broadlink/34:ea:34:xx:xx:xx/COMMAND_ID
+
+
 ## Start
 Just start `mqtt.py` script using Python interpreter
 
