@@ -1,8 +1,8 @@
-# MQTT client to control BroadLink RM devices
+# MQTT client to control BroadLink devices
  
 ## Installation
 Install required Python modules using  
-`pip install paho-mqtt broadlink`
+`pip install paho-mqtt broadlink`sdsdsd
 
 ## Configuration
 All configurable parameters are present in `mqtt.conf` file  
@@ -12,7 +12,7 @@ Macros are saved under the `macros/` folder
 ## Start
 Just start `mqtt.py` script using Python interpreter
 
-## MQTT commands
+## IR control commands (RM2/RM3 devices)
 ### Recording
 To record new command just send `record` message to the topic `broadlink/COMMAND_ID`,  
 where COMMAND_ID is any identifier that can be used for file name (slashes are also allowed)  
@@ -36,7 +36,7 @@ To start smart mode need to send empty string or `auto` to the command topic
 first time: `auto` -> `broadlink/tv/samsung/power` records command  
 every next time: `auto` -> `broadlink/tv/samsung/power` replays command  
 
-### Macros
+### Macrosds
 Macros are created to send several IR signals for single MQTT message.  
 To start macros execution send `macro` message to the topic `broadlink/MACRO_ID`,  
 where `MACRO_ID` is a path to scenario file in `macros/` folder.  
@@ -46,3 +46,10 @@ Macros scenario file could contain:
  - pause instructions (`pause DELAY_IN_MILLISECONDS`)
  - comments (lines started with `#`)
  
+## Power control commands (SP1/SP2 devices)
+To switch power on (off) need to send command `on` (`off`) to `broadlink/power` topic
+
+## Power control commands (MP1 device)
+To switch power on (off) on outlet number N need to send command `N/on` (`N/off`) to `broadlink/power` topic.
+**Example:**  
+switch on 2-nd outlet: `2/on` -> `broadlink/power`
