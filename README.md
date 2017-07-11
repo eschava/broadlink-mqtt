@@ -2,7 +2,7 @@
  
 ## Installation
 Install required Python modules using  
-`pip install paho-mqtt broadlink`sdsdsd
+`pip install paho-mqtt broadlink`
 
 ## Configuration
 All configurable parameters are present in `mqtt.conf` file  
