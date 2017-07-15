@@ -47,7 +47,7 @@ topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
 def on_message(client, device, msg):
     command = msg.topic[len(topic_prefix):]
 
-    if command == 'temperature':  # internal notification
+    if command == 'temperature' or command == 'energy':  # internal notification
         return
 
     try:
@@ -203,6 +203,18 @@ def broadlink_rm_temperature_timer(scheduler, delay, device):
         logging.exception("Error")
 
 
+def broadlink_sp_energy_timer(scheduler, delay, device):
+    scheduler.enter(delay, 1, broadlink_sp_energy_timer, [scheduler, delay, device])
+
+    try:
+        energy = str(device.get_energy())
+        topic = topic_prefix + "energy"
+        logging.debug("Sending SP energy " + energy + " to topic " + topic)
+        mqttc.publish(topic, energy, qos=qos, retain=retain)
+    except:
+        logging.exception("Error")
+
+
 class SchedulerThread(Thread):
     def __init__(self, scheduler):
         Thread.__init__(self)
@@ -241,6 +253,16 @@ if __name__ == '__main__':
         scheduler = sched.scheduler(time.time, time.sleep)
         scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer,
                         [scheduler, broadlink_rm_temperature_interval, device])
+        # scheduler.run()
+        tt = SchedulerThread(scheduler)
+        tt.daemon = True
+        tt.start()
+
+    broadlink_sp_energy_interval = cf.get('broadlink_sp_energy_interval', 0)
+    if device.type == 'SP2' and broadlink_sp_energy_interval > 0:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        scheduler.enter(broadlink_sp_energy_interval, 1, broadlink_sp_energy_timer,
+                        [scheduler, broadlink_sp_energy_interval, device])
         # scheduler.run()
         tt = SchedulerThread(scheduler)
         tt.daemon = True
