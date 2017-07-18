@@ -14,8 +14,9 @@ from test import TestDevice
 
 # read initial config files
 dirname = os.path.dirname(os.path.abspath(__file__)) + '/'
-logging.config.fileConfig(dirname + 'logging.conf')
 CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + 'mqtt.conf')
+logger = logging.getLogger()
+LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 
 
 class Config(object):
@@ -26,7 +27,7 @@ class Config(object):
     def get(self, key, default='special empty value'):
         v = self.config.get(key, default)
         if v == 'special empty value':
-            logging.error("Configuration parameter '%s' should be specified" % key)
+            print("Configuration parameter '%s' should be specified" % key)
             sys.exit(2)
         return v
 
@@ -41,6 +42,19 @@ qos = cf.get('mqtt_qos', 0)
 retain = cf.get('mqtt_retain', False)
 
 topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
+#Logging
+LOG_LEVEL = logging.DEBUG
+LOG_FILE = "{0}broadlink.log".format(cf.get('logdir'))
+log_handler = logging.handlers.WatchedFileHandler(LOG_FILE)
+formatter = logging.Formatter(LOG_FORMAT)
+log_handler.setLevel(logging.DEBUG)
+log_handler.setFormatter(formatter)
+logger.addHandler(log_handler)
+logging.info("logging complete")
+logging.debug("logging complete")
+
+print LOG_FILE
+#logging.basicConfig(filename=LOG_FILE, format=LOG_FORMAT, level=LOG_LEVEL)
 
 
 # noinspection PyUnusedLocal
@@ -53,6 +67,24 @@ def on_message(client, device, msg):
     try:
         action = str(msg.payload)
         logging.debug("Received MQTT message " + msg.topic + " " + action)
+
+        if type(device) is dict:
+            try:
+                devicename = ""
+                #assume multi client - so we need to get the client from the first section of the message
+                items = command.split("/")
+                devicename = items[0]
+                del items[0]
+                if not devicename:
+                    return
+                command = '/'.join(map(str, items)) 
+                logging.debug("Looking for device of name %s" % devicename)
+                device = device[devicename]
+            except Exception:
+                logging.warning("Could not find device in dictionary")
+                for deviceitem in device:
+                     logging.warning("Use {0} to access device".format(deviceitem))
+            
 
         if command == 'power':
             if device.type == 'SP1' or device.type == 'SP2':
@@ -190,6 +222,77 @@ def get_device(cf):
             logging.error('Incorrect device configured: ' + device_type)
             sys.exit(2)
 
+def get_devices(cf):
+    devicesdict = {}
+    device_type = cf.get('device_type', 'lookup')
+    if device_type == 'lookup':
+        #can't test this as for some reason dicovery is not working for me
+        local_address = cf.get('local_address', None)
+        lookup_timeout = cf.get('lookup_timeout', 20)
+        devices = broadlink.discover(timeout=lookup_timeout) if local_address is None else \
+            broadlink.discover(timeout=lookup_timeout, local_ip_address=local_address)
+        if len(devices) == 0:
+            logging.error('No Broadlink device found')
+            sys.exit(2)
+        if len(devices) > 1:
+            logging.error('More than one Broadlink device found (' + ', '.join([d.host for d in devices]) + ')')
+        
+        lookupdevices = {}
+        for device in devices:
+            logging.debug("Adding device with name : {0}.  If you want to message it the format is {1}/{0}/command".format(device.mac,topic_prefix))
+            devicesdict[device.mac] = device
+
+        return devicesdict
+    elif device_type == 'test':
+        return TestDevice(cf)
+    elif device_type == 'list':
+        counter = 1
+        while True:
+            hoststr = cf.get('device_host_{0}'.format(counter),'')
+            if hoststr is None or hoststr == '':
+                break
+            host = (hoststr,80)
+            
+            macstring = cf.get('device_mac_{0}'.format(counter))
+            mac = bytearray.fromhex(macstring.replace(':', ' '))
+            device_type = cf.get('device_type_{0}'.format(counter))
+            logging.info('Found device host:{0} mac:{1} type:{2}'.format(host,macstring,device_type))
+
+            if device_type == 'rm':
+                devicesdict[macstring] = broadlink.rm(host=host, mac=mac)
+            elif device_type == 'sp1':
+                devicesdict[macstring] = broadlink.sp1(host=host, mac=mac)
+            elif device_type == 'sp2':
+               devicesdict[macstring] = broadlink.sp2(host=host, mac=mac)
+            elif device_type == 'a1':
+               devicesdict[macstring] =  broadlink.a1(host=host, mac=mac)
+            elif device_type == 'mp1':
+                devicesdict[macstring] = broadlink.mp1(host=host, mac=mac)
+            else:
+                logging.error('Incorrect device configured: ' + device_type)
+                sys.exit(2)
+            logging.debug("Adding device with name : {0}.  If you want to message it the format is {1}/{0}/command".format(macstring,topic_prefix))
+
+            counter += 1
+        return devicesdict
+    else:
+        host = (cf.get('device_host'), 80)
+        macstring = cf.get('device_mac')
+        mac = bytearray.fromhex(macstring.replace(':', ' '))
+        if device_type == 'rm':
+            devicesdict[macstring] = broadlink.rm(host=host, mac=mac)
+        elif device_type == 'sp1':
+            devicesdict[macstring] = broadlink.sp1(host=host, mac=mac)
+        elif device_type == 'sp2':
+            devicesdict[macstring] = broadlink.sp2(host=host, mac=mac)
+        elif device_type == 'a1':
+            devicesdict[macstring] = broadlink.a1(host=host, mac=mac)
+        elif device_type == 'mp1':
+            devicesdict[macstring] = broadlink.mp1(host=host, mac=mac)
+        else:
+            logging.error('Incorrect device configured: ' + device_type)
+            sys.exit(2)
+        return devicesdict
 
 def broadlink_rm_temperature_timer(scheduler, delay, device):
     scheduler.enter(delay, 1, broadlink_rm_temperature_timer, [scheduler, delay, device])
@@ -216,13 +319,51 @@ class SchedulerThread(Thread):
 
 
 if __name__ == '__main__':
-    device = get_device(cf)
-    device.auth()
-    logging.debug('Connected to %s Broadlink device at %s' % (device.type, device.host))
+    logger = logging.getLogger()
+    log_handler2 = logging.StreamHandler()
+    log_handler2.setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
+    log_handler2.setFormatter(formatter)
+    logger.addHandler(log_handler2)
+    logger.addHandler(log_handler)
+    logger.info("logging complete")
+    logger.error("test")
+
+    device_type = cf.get('device_type', 'lookup')
+    #if device_type == 'lookup' or device_type == 'list':
+    #    devices = get_devices(cf)
+    #else:
+    #    devices = {}
+    #    devices[0] = get_devices(cf)
+    devices = get_devices(cf)
+
+    threads = []
+    mqttcs = []
+
+    broadlink_rm_temperature_interval = cf.get('broadlink_rm_temperature_interval', 0)
 
     clientid = cf.get('mqtt_clientid', 'broadlink-%s' % os.getpid())
     # initialise MQTT broker connection
-    mqttc = paho.Client(clientid, clean_session=cf.get('mqtt_clean_session', False), userdata=device)
+    #mqttc = paho.Client(clientid, clean_session=cf.get('mqtt_clean_session', False), userdata=device)
+    
+    mqttc = None
+    for device in devices.itervalues():
+        logging.debug('Connected to %s Broadlink device at %s' % (device.type, device.host))
+        device.auth()
+        if device.type == 'RM2' and broadlink_rm_temperature_interval > 0:
+            scheduler = sched.scheduler(time.time, time.sleep)
+            scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer,
+                            [scheduler, broadlink_rm_temperature_interval, device])
+            # scheduler.run()
+            tt = SchedulerThread(scheduler)
+            tt.daemon = True
+            tt.start()
+            threads.append(tt)
+            
+    if len(devices) == 1:
+        mqttc = paho.Client(clientid, clean_session=cf.get('mqtt_clean_session', False), userdata=devices.values()[0])
+    else:
+        mqttc = paho.Client(clientid, clean_session=cf.get('mqtt_clean_session', False), userdata=devices)
 
     mqttc.on_message = on_message
     mqttc.on_connect = on_connect
@@ -236,16 +377,6 @@ if __name__ == '__main__':
     mqttc.username_pw_set(cf.get('mqtt_username'), cf.get('mqtt_password'))
     mqttc.connect(cf.get('mqtt_broker', 'localhost'), int(cf.get('mqtt_port', '1883')), 60)
 
-    broadlink_rm_temperature_interval = cf.get('broadlink_rm_temperature_interval', 0)
-    if device.type == 'RM2' and broadlink_rm_temperature_interval > 0:
-        scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer,
-                        [scheduler, broadlink_rm_temperature_interval, device])
-        # scheduler.run()
-        tt = SchedulerThread(scheduler)
-        tt.daemon = True
-        tt.start()
-
     while True:
         try:
             mqttc.loop_forever()
@@ -255,4 +386,5 @@ if __name__ == '__main__':
             sys.exit(0)
         except:
             logging.exception("Error")
+
 
