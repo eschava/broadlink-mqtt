@@ -17,7 +17,9 @@ device_host_2 =
 
 etc.
 When posting a message to one fo these devices, add the mac id after the mqtt_topic_prefix
-eg: broadlink/34:ea:34:xx:xx:xx/COMMAND_ID
+eg: broadlink/34ea34xxxxxx/COMMAND_ID
+the existing broadlilnk/COMMAND_ID will still work for a single device.
+NOTE:  had to remove the ':' from the MAC address as openhab wouldn't supportit.
 
 
 ## Start
