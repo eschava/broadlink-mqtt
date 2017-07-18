@@ -22,6 +22,13 @@ eg: broadlink/34:ea:34:xx:xx:xx/COMMAND_ID
 
 ## Start
 Just start `mqtt.py` script using Python interpreter
+Or to install as a service:
+ 1. Copy the broadlink.service file to /usr/lib/systemd/system (where mine is)
+ 2. Run sudo systemctl daemon-reload
+ 3. Then you should be able to start the service with sudo service broadlink start
+
+
+
 
 ## MQTT commands
 ### Recording

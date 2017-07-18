@@ -14,8 +14,9 @@ from test import TestDevice
 
 # read initial config files
 dirname = os.path.dirname(os.path.abspath(__file__)) + '/'
-logging.config.fileConfig(dirname + 'logging.conf')
 CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + 'mqtt.conf')
+logger = logging.getLogger()
+LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 
 
 class Config(object):
@@ -26,7 +27,7 @@ class Config(object):
     def get(self, key, default='special empty value'):
         v = self.config.get(key, default)
         if v == 'special empty value':
-            logging.error("Configuration parameter '%s' should be specified" % key)
+            print("Configuration parameter '%s' should be specified" % key)
             sys.exit(2)
         return v
 
@@ -41,6 +42,19 @@ qos = cf.get('mqtt_qos', 0)
 retain = cf.get('mqtt_retain', False)
 
 topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
+#Logging
+LOG_LEVEL = logging.DEBUG
+LOG_FILE = "{0}broadlink.log".format(cf.get('logdir'))
+log_handler = logging.handlers.WatchedFileHandler(LOG_FILE)
+formatter = logging.Formatter(LOG_FORMAT)
+log_handler.setLevel(logging.DEBUG)
+log_handler.setFormatter(formatter)
+logger.addHandler(log_handler)
+logging.info("logging complete")
+logging.debug("logging complete")
+
+print LOG_FILE
+#logging.basicConfig(filename=LOG_FILE, format=LOG_FORMAT, level=LOG_LEVEL)
 
 
 # noinspection PyUnusedLocal
@@ -55,13 +69,21 @@ def on_message(client, device, msg):
         logging.debug("Received MQTT message " + msg.topic + " " + action)
 
         if type(device) is dict:
-            devicename = ""
-            #assume multi client - so we need to get the client from the first section of the message
-            items = command.split("/")
-            devicename = items[0]
-            del items[0]
-            command = '/'.join(map(str, items)) 
-            device = device[devicename]
+            try:
+                devicename = ""
+                #assume multi client - so we need to get the client from the first section of the message
+                items = command.split("/")
+                devicename = items[0]
+                del items[0]
+                if not devicename:
+                    return
+                command = '/'.join(map(str, items)) 
+                logging.debug("Looking for device of name %s" % devicename)
+                device = device[devicename]
+            except Exception:
+                logging.warning("Could not find device in dictionary")
+                for deviceitem in device:
+                     logging.warning("Use {0} to access device".format(deviceitem))
             
 
         if command == 'power':
@@ -217,6 +239,7 @@ def get_devices(cf):
         
         lookupdevices = {}
         for device in devices:
+            logging.debug("Adding device with name : {0}.  If you want to message it the format is {1}/{0}/command".format(device.mac,topic_prefix))
             devicesdict[device.mac] = device
 
         return devicesdict
@@ -248,6 +271,8 @@ def get_devices(cf):
             else:
                 logging.error('Incorrect device configured: ' + device_type)
                 sys.exit(2)
+            logging.debug("Adding device with name : {0}.  If you want to message it the format is {1}/{0}/command".format(macstring,topic_prefix))
+
             counter += 1
         return devicesdict
     else:
@@ -294,6 +319,16 @@ class SchedulerThread(Thread):
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger()
+    log_handler2 = logging.StreamHandler()
+    log_handler2.setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
+    log_handler2.setFormatter(formatter)
+    logger.addHandler(log_handler2)
+    logger.addHandler(log_handler)
+    logger.info("logging complete")
+    logger.error("test")
+
     device_type = cf.get('device_type', 'lookup')
     #if device_type == 'lookup' or device_type == 'list':
     #    devices = get_devices(cf)
@@ -351,4 +386,5 @@ if __name__ == '__main__':
             sys.exit(0)
         except:
             logging.exception("Error")
+
 
