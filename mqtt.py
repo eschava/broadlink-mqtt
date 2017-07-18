@@ -240,6 +240,7 @@ def get_devices(cf):
         lookupdevices = {}
         for device in devices:
             logging.debug("Adding device with name : {0}.  If you want to message it the format is {1}/{0}/command".format(device.mac,topic_prefix))
+            devicename = device.max.replace(':','')
             devicesdict[device.mac] = device
 
         return devicesdict
@@ -256,22 +257,23 @@ def get_devices(cf):
             macstring = cf.get('device_mac_{0}'.format(counter))
             mac = bytearray.fromhex(macstring.replace(':', ' '))
             device_type = cf.get('device_type_{0}'.format(counter))
-            logging.info('Found device host:{0} mac:{1} type:{2}'.format(host,macstring,device_type))
+            devicename = macstring.replace(':','')
+            logging.info('Found device host:{0} mac:{1} type:{2} as key:{3}'.format(host,macstring,device_type,devicename))
 
             if device_type == 'rm':
-                devicesdict[macstring] = broadlink.rm(host=host, mac=mac)
+                devicesdict[devicename] = broadlink.rm(host=host, mac=mac)
             elif device_type == 'sp1':
-                devicesdict[macstring] = broadlink.sp1(host=host, mac=mac)
+                devicesdict[devicename] = broadlink.sp1(host=host, mac=mac)
             elif device_type == 'sp2':
-               devicesdict[macstring] = broadlink.sp2(host=host, mac=mac)
+               devicesdict[devicename] = broadlink.sp2(host=host, mac=mac)
             elif device_type == 'a1':
-               devicesdict[macstring] =  broadlink.a1(host=host, mac=mac)
+               devicesdict[devicename] =  broadlink.a1(host=host, mac=mac)
             elif device_type == 'mp1':
-                devicesdict[macstring] = broadlink.mp1(host=host, mac=mac)
+                devicesdict[devicename] = broadlink.mp1(host=host, mac=mac)
             else:
                 logging.error('Incorrect device configured: ' + device_type)
                 sys.exit(2)
-            logging.debug("Adding device with name : {0}.  If you want to message it the format is {1}/{0}/command".format(macstring,topic_prefix))
+            logging.debug("Adding device with name : {0}.  If you want to message it the format is {1}/{0}/command".format(devicename,topic_prefix))
 
             counter += 1
         return devicesdict
