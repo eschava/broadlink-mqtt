@@ -1,0 +1,18 @@
+[Unit]
+Description=Starts and stops the Broadink Python script
+Documentation=https://github.com/psyciknz/broadlink-mqtt
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=/opt/broadlink-mqtt/mqtt.conf
+User=openhab
+Group=openhab
+WorkingDirectory=/opt/broadlink-mqtt/
+PermissionsStartOnly=true
+ExecStart=/usr/bin/python /opt/broadlink-mqtt/mqtt.py
+# Shutdown delay in seconds, before process is tried to be killed with KILL (if configured)
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
