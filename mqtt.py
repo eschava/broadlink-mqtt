@@ -78,7 +78,7 @@ topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
 def on_message(client, device, msg):
     command = msg.topic[len(topic_prefix):]
 
-    if command == 'temperature' or command == 'energy':  # internal notification
+    if command == 'temperature' or command == 'energy' or command.startswith('sensor/'):  # internal notification
         return
 
     try:
@@ -246,6 +246,20 @@ def broadlink_sp_energy_timer(scheduler, delay, device):
         logging.exception("Error")
 
 
+def broadlink_a1_sensors_timer(scheduler, delay, device):
+    scheduler.enter(delay, 1, broadlink_a1_sensors_timer, [scheduler, delay, device])
+
+    try:
+        sensors = device.check_sensors_raw()
+        for name in sensors:
+            topic = topic_prefix + "sensor/" + name
+            value = str(sensors[name])
+            logging.debug("Sending A1 " + name + " " + value + " to topic " + topic)
+            mqttc.publish(topic, value, qos=qos, retain=retain)
+    except:
+        logging.exception("Error")
+
+
 class SchedulerThread(Thread):
     def __init__(self, scheduler):
         Thread.__init__(self)
@@ -300,6 +314,16 @@ if __name__ == '__main__':
         scheduler = sched.scheduler(time.time, time.sleep)
         scheduler.enter(broadlink_sp_energy_interval, 1, broadlink_sp_energy_timer,
                         [scheduler, broadlink_sp_energy_interval, device])
+        # scheduler.run()
+        tt = SchedulerThread(scheduler)
+        tt.daemon = True
+        tt.start()
+
+    broadlink_a1_sensors_interval = cf.get('broadlink_a1_sensors_interval', 0)
+    if device.type == 'A1' and broadlink_a1_sensors_interval > 0:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        scheduler.enter(broadlink_a1_sensors_interval, 1, broadlink_a1_sensors_timer,
+                        [scheduler, broadlink_a1_sensors_interval, device])
         # scheduler.run()
         tt = SchedulerThread(scheduler)
         tt.daemon = True

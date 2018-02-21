@@ -1,3 +1,4 @@
+# noinspection PyMethodMayBeStatic
 class TestDevice:
     def __init__(self, cf):
         self.type = cf.get('device_test_type', 'test')
@@ -11,3 +12,6 @@ class TestDevice:
 
     def send_data(self, data):
         pass
+
+    def check_sensors_raw(self):
+        return {'temperature': 23.5, 'humidity': 36, 'light': 1, 'air_quality': 3, 'noise': 2}
