@@ -9,13 +9,14 @@ import logging
 import logging.config
 import socket
 import sched
+from threading import Thread
+from test import TestDevice
+
 HAVE_TLS = True
 try:
     import ssl
 except ImportError:
     HAVE_TLS = False
-from threading import Thread
-from test import TestDevice
 
 # read initial config files
 dirname = os.path.dirname(os.path.abspath(__file__)) + '/'
@@ -26,32 +27,27 @@ CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + 'mqtt.conf')
 class Config(object):
     def __init__(self, filename=CONFIG):
         self.config = {}
-        self.config['ca_certs']     = None
-        self.config['tls_version']  = None
-        self.config['certfile']     = None
-        self.config['keyfile']      = None
-        self.config['tls_insecure'] = False
-        self.config['tls']          = False
         execfile(filename, self.config)
 
-        if HAVE_TLS == False:
+        if not HAVE_TLS:
             logging.error("TLS parameters set but no TLS available (SSL)")
             sys.exit(2)
 
-        if self.config.get('ca_certs') is not None:
+        if self.config.get('ca_certs', None) is not None:
             self.config['tls'] = True
 
-        if self.config.get('tls_version') is not None:
-            if self.config.get('tls_version') == 'tlsv1':
+        tls_version = self.config.get('tls_version', None)
+        if tls_version is not None:
+            if tls_version == 'tlsv1':
                 self.config['tls_version'] = ssl.PROTOCOL_TLSv1
-            if self.config.get('tls_version') == 'tlsv1.2':
+            if tls_version == 'tlsv1.2':
                 # TLS v1.2 is available starting from python 2.7.9 and requires openssl version 1.0.1+.
-                if sys.version_info >= (2,7,9):
+                if sys.version_info >= (2, 7, 9):
                     self.config['tls_version'] = ssl.PROTOCOL_TLSv1_2
                 else:
                     logging.error("TLS version 1.2 not available but 'tlsv1.2' is set.")
-            	    sys.exit(2)
-            if self.config.get('tls_version') == 'sslv3':
+                    sys.exit(2)
+            if tls_version == 'sslv3':
                 self.config['tls_version'] = ssl.PROTOCOL_SSLv3
 
     def get(self, key, default='special empty value'):
@@ -290,10 +286,11 @@ if __name__ == '__main__':
     # Delays will be: 3, 6, 12, 24, 30, 30, ...
     # mqttc.reconnect_delay_set(delay=3, delay_max=30, exponential_backoff=True)
 
-    if cf.get('tls') == True:
-        mqttc.tls_set(cf.get('ca_certs'), cf.get('certfile'), cf.get('keyfile'), tls_version=cf.get('tls_version'), ciphers=None)
+    if cf.get('tls', False):
+        mqttc.tls_set(cf.get('ca_certs', None), cf.get('certfile', None), cf.get('keyfile', None),
+                      tls_version=cf.get('tls_version', None), ciphers=None)
 
-    if cf.get('tls_insecure'):
+    if cf.get('tls_insecure', False):
         mqttc.tls_insecure_set(True)
 
     mqttc.username_pw_set(cf.get('mqtt_username'), cf.get('mqtt_password'))
@@ -338,4 +335,3 @@ if __name__ == '__main__':
             sys.exit(0)
         except:
             logging.exception("Error")
-
