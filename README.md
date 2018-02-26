@@ -1,13 +1,32 @@
 # MQTT client to control BroadLink devices
  
 ## Installation
-Install required Python modules using  
+Clone *broadlink-mqtt* repository using  
+`git clone https://github.com/eschava/broadlink-mqtt.git`  
+or download and unpack latest archive from  
+https://github.com/eschava/broadlink-mqtt/archive/master.zip  
+
+Also need to install required Python modules using  
 `pip install paho-mqtt broadlink`
 
 ## Configuration
 All configurable parameters are present in `mqtt.conf` file  
 Recorded commands are saved under the `commands/` folder  
 Macros are saved under the `macros/` folder
+
+### Multiple devices configuration
+Usually *broadlink-mqtt* works with single Broadlink device only, but there is an experimental feature to support several devices connected to the same network.   
+Configuration parameters:   
+`device_type = 'multiple_lookup'`  
+`mqtt_multiple_subprefix_format = '{type}_{mac_nic}/'`  
+Second parameter defines format of sub-prefix for every found device. E.g. for RM2 device having MAC address 11:22:33:44:55:66, MQTT prefix will be  
+`broadlink/RM2_44:55:66/`  
+Format supports next placeholders:  
+   * `{type}` - type of the device (RM2, A1, etc)  
+   * `{host}` - host name of the device  
+   * `{mac}` - MAC address of the device  
+   * `{mac_nic}` - last 3 octets of the MAC address (NIC)  
+
 
 ## Start
 Just start `mqtt.py` script using Python interpreter
@@ -50,13 +69,25 @@ Macros scenario file could contain:
 To switch power on (off) need to send command `on` (`off`) to `broadlink/power` topic
 
 ## MQTT commands to control power (MP1 device)
-To switch power on (off) on outlet number N need to send command `N/on` (`N/off`) to `broadlink/power` topic.
+To switch power on (off) on outlet number N need to send command `on` (`off`) to `broadlink/power/N` topic.
 **Example:**  
-switch on 2-nd outlet: `2/on` -> `broadlink/power`
+switch on 2-nd outlet: `on` -> `broadlink/power/2`
 
 ## Subscription to current temperature (RM2 device)
-Need to set `broadlink_rm_temperature_interval` configuration parameter to number of seconds between regular update.
+Need to set `broadlink_rm_temperature_interval` configuration parameter to number of seconds between periodic updates.
 E.g. 
 `broadlink_rm_temperature_interval`=120
 means current temperature will be published to topic `broadlink/temperature` every 2 minutes
+
+## Subscription to current used energy (SP2 device)
+Need to set `broadlink_sp_energy_interval` configuration parameter to number of seconds between periodic updates.
+E.g. 
+`broadlink_sp_energy_interval`=120
+means current used energy will be published to topic `broadlink/energy` every 2 minutes
+
+## Subscription to current sensors data (A1 device)
+Need to set `broadlink_a1_sensors_interval` configuration parameter to number of seconds between periodic updates.
+E.g. 
+`broadlink_a1_sensors_interval`=120
+means current sensors data will be published to topics `broadlink/sensors/[temperature/humidity/light/air_quality/noise]` every 2 minutes
 
