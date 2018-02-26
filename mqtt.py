@@ -72,7 +72,7 @@ topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
 
 # noinspection PyUnusedLocal
 def on_message(client, device, msg):
-    command = msg.topic[len(topic_prefix):]
+    command = msg.topic[len(topic_prefix):].lower()
 
     if isinstance(device, dict):
         for subprefix in device:
@@ -88,7 +88,7 @@ def on_message(client, device, msg):
         return
 
     try:
-        action = str(msg.payload)
+        action = str(msg.payload).lower()
         logging.debug("Received MQTT message " + msg.topic + " " + action)
 
         if command == 'power':
@@ -106,6 +106,13 @@ def on_message(client, device, msg):
                     logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
                     device.set_power(sid, state)
                     return
+
+        if command.startswith('power/') and device.type == 'MP1':
+            sid = int(command[6:])
+            state = action == 'on'
+            logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
+            device.set_power(sid, state)
+            return
 
         if device.type == 'RM2':
             file = dirname + "commands/" + command
@@ -228,7 +235,7 @@ def get_device(cf):
             devices_dict[mqtt_subprefix] = device
         return devices_dict
     elif device_type == 'test':
-        return configure_device(TestDevice(cf))
+        return configure_device(TestDevice(cf), topic_prefix)
     else:
         host = (cf.get('device_host'), 80)
         mac = bytearray.fromhex(cf.get('device_mac').replace(':', ' '))
