@@ -2,7 +2,7 @@
 class TestDevice:
     def __init__(self, cf):
         self.type = cf.get('device_test_type', 'test')
-        self.host = 'test'
+        self.host = ('test', 80)
         self.mac = [1, 2, 3, 4, 5, 6]
 
     def auth(self):
