@@ -72,7 +72,7 @@ topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
 
 # noinspection PyUnusedLocal
 def on_message(client, device, msg):
-    command = msg.topic[len(topic_prefix):].lower()
+    command = msg.topic[len(topic_prefix):]
 
     if isinstance(device, dict):
         for subprefix in device:
@@ -230,7 +230,7 @@ def get_device(cf):
                 type=device.type,
                 host=device.host[0],
                 mac=':'.join(format(s, '02x') for s in device.mac[::-1]),
-                mac_nic=':'.join(format(s, '02x') for s in device.mac[2::-1])).lower()
+                mac_nic=':'.join(format(s, '02x') for s in device.mac[2::-1]))
             device = configure_device(device, topic_prefix + mqtt_subprefix)
             devices_dict[mqtt_subprefix] = device
         return devices_dict
