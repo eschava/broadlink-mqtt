@@ -22,22 +22,25 @@ except ImportError:
 dirname = os.path.dirname(os.path.abspath(__file__)) + '/'
 logging.config.fileConfig(dirname + 'logging.conf')
 CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + 'mqtt.conf')
+CONFIG_CUSTOM = os.getenv('BROADLINKMQTTCONFIGCUSTOM', dirname + 'custom.conf')
 
 
 class Config(object):
-    def __init__(self, filename=CONFIG):
+    def __init__(self, filename=CONFIG, custom_filename=CONFIG_CUSTOM):
         self.config = {}
         execfile(filename, self.config)
-
-        if not HAVE_TLS:
-            logging.error("TLS parameters set but no TLS available (SSL)")
-            sys.exit(2)
+        if os.path.isfile(custom_filename):
+            execfile(custom_filename, self.config)
 
         if self.config.get('ca_certs', None) is not None:
             self.config['tls'] = True
 
         tls_version = self.config.get('tls_version', None)
         if tls_version is not None:
+            if not HAVE_TLS:
+                logging.error("TLS parameters set but no TLS available (SSL)")
+                sys.exit(2)
+
             if tls_version == 'tlsv1':
                 self.config['tls_version'] = ssl.PROTOCOL_TLSv1
             if tls_version == 'tlsv1.2':
@@ -229,8 +232,8 @@ def get_device(cf):
             mqtt_subprefix = mqtt_multiple_prefix_format.format(
                 type=device.type,
                 host=device.host[0],
-                mac=':'.join(format(s, '02x') for s in device.mac[::-1]),
-                mac_nic=':'.join(format(s, '02x') for s in device.mac[2::-1]))
+                mac='_'.join(format(s, '02x') for s in device.mac[::-1]),
+                mac_nic='_'.join(format(s, '02x') for s in device.mac[2::-1]))
             device = configure_device(device, topic_prefix + mqtt_subprefix)
             devices_dict[mqtt_subprefix] = device
         return devices_dict
