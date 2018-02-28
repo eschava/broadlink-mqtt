@@ -10,7 +10,7 @@ Also need to install required Python modules using
 `pip install paho-mqtt broadlink`
 
 ## Configuration
-All configurable parameters are present in `mqtt.conf` file  
+All configurable parameters are present in `mqtt.conf` file. But there is also `custom.conf` file. Changes from `custom.conf` overrides `mqtt.conf` and it's better to put changed configuration parameters there, to avoid conflicts while updating branch from repository.   
 Recorded commands are saved under the `commands/` folder  
 Macros are saved under the `macros/` folder
 
