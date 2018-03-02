@@ -215,7 +215,9 @@ def get_device(cf):
             logging.error('No Broadlink device found')
             sys.exit(2)
         if len(devices) > 1:
-            logging.error('More than one Broadlink device found (' + ', '.join([d.host for d in devices]) + ')')
+            logging.error('More than one Broadlink device found (' +
+                          ', '.join([d.type + '/' + d.host[0] + '/' + ':'.join(format(s, '02x') for s in d.mac[::-1]) for d in devices]) +
+                          ')')
             sys.exit(2)
         return configure_device(devices[0], topic_prefix)
     elif device_type == 'multiple_lookup':
