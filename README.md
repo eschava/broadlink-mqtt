@@ -20,7 +20,7 @@ Configuration parameters:
 `device_type = 'multiple_lookup'`  
 `mqtt_multiple_subprefix_format = '{type}_{mac_nic}/'`  
 Second parameter defines format of sub-prefix for every found device. E.g. for RM2 device having MAC address 11:22:33:44:55:66, MQTT prefix will be  
-`broadlink/RM2_44:55:66/`  
+`broadlink/RM2_44_55_66/`  
 Format supports next placeholders:  
    * `{type}` - type of the device (RM2, A1, etc)  
    * `{host}` - host name of the device  
