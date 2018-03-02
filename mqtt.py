@@ -9,6 +9,7 @@ import logging
 import logging.config
 import socket
 import sched
+import json
 from threading import Thread
 from test import TestDevice
 
@@ -87,7 +88,8 @@ def on_message(client, device, msg):
             logging.error("MQTT topic %s has no recognized device reference, expected one of %s" % (msg.topic, str(device.keys())))
             return
 
-    if command == 'temperature' or command == 'energy' or command.startswith('sensor/'):  # internal notification
+    # internal notification
+    if command == 'temperature' or command == 'energy' or command == 'sensors' or command.startswith('sensor/'):
         return
 
     try:
@@ -327,12 +329,19 @@ def broadlink_a1_sensors_timer(scheduler, delay, device, mqtt_prefix):
 
     try:
         text_values = cf.get('broadlink_a1_sensors_text_values', False)
+        is_json = cf.get('broadlink_a1_sensors_json', False)
         sensors = device.check_sensors() if text_values else device.check_sensors_raw()
-        for name in sensors:
-            topic = mqtt_prefix + "sensor/" + name
-            value = str(sensors[name])
-            logging.debug("Sending A1 %s '%s' to topic '%s'" % (name, value, topic))
+        if is_json:
+            topic = mqtt_prefix + "sensors"
+            value = json.dumps(sensors)
+            logging.debug("Sending A1 sensors '%s' to topic '%s'" % (value, topic))
             mqttc.publish(topic, value, qos=qos, retain=retain)
+        else:
+            for name in sensors:
+                topic = mqtt_prefix + "sensor/" + name
+                value = str(sensors[name])
+                logging.debug("Sending A1 %s '%s' to topic '%s'" % (name, value, topic))
+                mqttc.publish(topic, value, qos=qos, retain=retain)
     except:
         logging.exception("Error")
 
