@@ -324,11 +324,12 @@ def broadlink_a1_sensors_timer(scheduler, delay, device, mqtt_prefix):
     scheduler.enter(delay, 1, broadlink_a1_sensors_timer, [scheduler, delay, device, mqtt_prefix])
 
     try:
-        sensors = device.check_sensors_raw()
+        text_values = cf.get('broadlink_a1_sensors_text_values', False)
+        sensors = device.check_sensors() if text_values else device.check_sensors_raw()
         for name in sensors:
             topic = mqtt_prefix + "sensor/" + name
             value = str(sensors[name])
-            logging.debug("Sending A1 " + name + " " + value + " to topic " + topic)
+            logging.debug("Sending A1 %s '%s' to topic '%s'" % (name, value, topic))
             mqttc.publish(topic, value, qos=qos, retain=retain)
     except:
         logging.exception("Error")

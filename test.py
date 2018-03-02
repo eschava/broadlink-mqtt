@@ -14,5 +14,8 @@ class TestDevice:
     def send_data(self, data):
         pass
 
+    def check_sensors(self):
+        return {'temperature': 23.5, 'humidity': 36, 'light': 'dim', 'air_quality': 'normal', 'noise': 'noisy'}
+
     def check_sensors_raw(self):
         return {'temperature': 23.5, 'humidity': 36, 'light': 1, 'air_quality': 3, 'noise': 2}
