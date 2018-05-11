@@ -247,15 +247,15 @@ def get_device(cf):
         host = (cf.get('device_host'), 80)
         mac = bytearray.fromhex(cf.get('device_mac').replace(':', ' '))
         if device_type == 'rm':
-            device = broadlink.rm(host=host, mac=mac)
+            device = broadlink.rm(host=host, mac=mac, devtype=0x2712)
         elif device_type == 'sp1':
-            device = broadlink.sp1(host=host, mac=mac)
+            device = broadlink.sp1(host=host, mac=mac, devtype=0)
         elif device_type == 'sp2':
-            device = broadlink.sp2(host=host, mac=mac)
+            device = broadlink.sp2(host=host, mac=mac, devtype=0x2711)
         elif device_type == 'a1':
-            device = broadlink.a1(host=host, mac=mac)
+            device = broadlink.a1(host=host, mac=mac, devtype=0x2714)
         elif device_type == 'mp1':
-            device = broadlink.mp1(host=host, mac=mac)
+            device = broadlink.mp1(host=host, mac=mac, devtype=0x4EB5)
         else:
             logging.error('Incorrect device configured: ' + device_type)
             sys.exit(2)
