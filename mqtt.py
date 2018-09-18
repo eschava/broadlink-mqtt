@@ -187,7 +187,7 @@ def replay(device, file):
     logging.debug("Replaying command from file " + file)
     with open(file, 'rb') as f:
         ir_packet = f.read()
-    device.send_data(ir_packet.decode('hex'))
+    device.send_data(ir_packet.strip().decode('hex'))
 
 
 def macro(device, file):
