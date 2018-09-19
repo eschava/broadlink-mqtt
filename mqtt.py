@@ -121,9 +121,13 @@ def on_message(client, device, msg):
 
         if device.type == 'RM2':
             file = dirname + "commands/" + command
+            handy_file = file + '/' + action
 
             if action == '' or action == 'auto':
                 record_or_replay(device, file)
+                return
+            elif os.path.isfile(handy_file):
+                replay(device, handy_file)
                 return
             elif action == 'record':
                 record(device, file)

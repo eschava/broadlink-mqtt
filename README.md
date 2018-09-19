@@ -46,6 +46,11 @@ where COMMAND_ID is identifier if the command
 `replay` -> `broadlink/tv/samsung/power`  
 and saved interpretation of IR signal will be replayed from file `commands/tv/samsung/power`
 
+Another format for replaying recorded command is using file name as a message and folder as MQTT topic.  
+**Example**: to replay power button for Samsung TV send  
+`power` -> `broadlink/tv/samsung`  
+and saved interpretation of IR signal will be replayed from file `commands/tv/samsung/power`
+
 ### Smart mode
 Smart mode means that if file with command doesn't exist it will be recorded.  
 Every next execution of the command will replay it.  
