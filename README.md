@@ -4,7 +4,7 @@
 
 docker build . -t broadlink2mqtt
 
-## run
+## Run
 
 docker run -it --name broadlink2mqtt -v ./data:/broadlink-mqtt/data broadlink2mqtt 
 
