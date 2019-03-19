@@ -1,7 +1,7 @@
 FROM debian:stretch
 
 RUN apt-get update && apt-get install -y\
-    build-essential python-pip
+    git build-essential python-pip
 
 RUN git clone https://github.com/TechForze/broadlink-mqtt
 
