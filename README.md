@@ -6,8 +6,8 @@ Clone *broadlink-mqtt* repository using
 or download and unpack latest archive from  
 https://github.com/eschava/broadlink-mqtt/archive/master.zip  
 
-Also need to install required Python modules using  
-`pip install paho-mqtt broadlink`
+Also need to install required Python modules using
+`pip install -r requirements.txt`  
 
 ## Configuration
 All configurable parameters are present in `mqtt.conf` file. But there is also `custom.conf` file. Changes from `custom.conf` overrides `mqtt.conf` and it's better to put changed configuration parameters there, to avoid conflicts while updating branch from repository.   
