@@ -126,11 +126,17 @@ def on_message(client, device, msg):
             if action == '' or action == 'auto':
                 record_or_replay(device, file)
                 return
+            elif action == 'autorf':
+                record_or_replay_rf(device, file)
+                return
             elif os.path.isfile(handy_file):
                 replay(device, handy_file)
                 return
             elif action == 'record':
                 record(device, file)
+                return
+            elif action == 'recordrf':
+                record_rf(device, file)
                 return
             elif action == 'replay':
                 replay(device, file)
@@ -165,6 +171,13 @@ def record_or_replay(device, file):
         record(device, file)
 
 
+def record_or_replay_rf(device, file):
+    if os.path.isfile(file):
+        replay(device, file)
+    else:
+        record_rf(device, file)
+
+
 def record(device, file):
     logging.debug("Recording command to file " + file)
     # receive packet
@@ -182,6 +195,46 @@ def record(device, file):
             os.makedirs(directory)
         with open(file, 'wb') as f:
             f.write(str(ir_packet).encode('hex'))
+        logging.debug("Done")
+    else:
+        logging.warn("No command received")
+
+
+def record_rf(device, file):
+    logging.debug("Recording RF command to file " + file)
+    logging.debug("Learning RF Frequency, press and hold the button to learn...")
+
+    device.sweep_frequency()
+    timeout = 20
+
+    while (not device.check_frequency()) and (timeout > 0):
+        time.sleep(1)
+        timeout -= 1
+
+    if timeout <= 0:
+        logging.warn("RF Frequency not found")
+        device.cancel_sweep_frequency()
+        return
+
+    logging.debug("Found RF Frequency - 1 of 2!")
+    time.sleep(5)
+    logging.debug("To complete learning, single press the button you want to learn")
+
+    # receive packet
+    device.find_rf_packet()
+    rf_packet = None
+    attempt = 0
+    while rf_packet is None and attempt < 6:
+        time.sleep(5)
+        rf_packet = device.check_data()
+        attempt = attempt + 1
+    if rf_packet is not None:
+        # write to file
+        directory = os.path.dirname(file)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(file, 'wb') as f:
+            f.write(str(rf_packet).encode('hex'))
         logging.debug("Done")
     else:
         logging.warn("No command received")

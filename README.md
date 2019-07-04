@@ -32,8 +32,8 @@ Format supports next placeholders:
 Just start `mqtt.py` script using Python interpreter
 
 ## MQTT commands to control IR (RM2/RM3 devices)
-### Recording
-To record new command just send `record` message to the topic `broadlink/COMMAND_ID`,  
+### Recording (IR or RF)
+To record new command just send `record` message for IR command or `recordrf` for RF command to the topic `broadlink/COMMAND_ID`,  
 where COMMAND_ID is any identifier that can be used for file name (slashes are also allowed)  
 **Example**: to record power button for Samsung TV send  
 `record` -> `broadlink/tv/samsung/power`  
@@ -55,7 +55,7 @@ and saved interpretation of IR signal will be replayed from file `commands/tv/sa
 Smart mode means that if file with command doesn't exist it will be recorded.  
 Every next execution of the command will replay it.  
 This mode is very convenient for home automation systems.  
-To start smart mode need to send empty string or `auto` to the command topic   
+To start smart mode need to send `auto` for IR command or `autorf` for RF command to the command topic   
 **Example:**  
 first time: `auto` -> `broadlink/tv/samsung/power` records command  
 every next time: `auto` -> `broadlink/tv/samsung/power` replays command  
