@@ -1,9 +1,11 @@
 FROM debian:stretch
 
 RUN apt-get update && apt-get install -y\
-    git build-essential python-pip
+    build-essential libssl-dev libffi-dev python-dev git python-pip
 
 RUN git clone https://github.com/TechForze/broadlink-mqtt
+
+#COPY . /broadlink-mqtt
 
 WORKDIR /broadlink-mqtt
 
