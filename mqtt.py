@@ -29,9 +29,9 @@ CONFIG_CUSTOM = os.getenv('BROADLINKMQTTCONFIGCUSTOM', dirname + 'custom.conf')
 class Config(object):
     def __init__(self, filename=CONFIG, custom_filename=CONFIG_CUSTOM):
         self.config = {}
-        execfile(filename, self.config)
+        exec(compile(open(filename, "rb").read(), filename, 'exec'), self.config)
         if os.path.isfile(custom_filename):
-            execfile(custom_filename, self.config)
+            exec(compile(open(custom_filename, "rb").read(), custom_filename, 'exec'), self.config)
 
         if self.config.get('ca_certs', None) is not None:
             self.config['tls'] = True
@@ -64,8 +64,8 @@ class Config(object):
 
 try:
     cf = Config()
-except Exception, e:
-    print "Cannot load configuration from file %s: %s" % (CONFIG, str(e))
+except Exception as e:
+    print("Cannot load configuration from file %s: %s" % (CONFIG, str(e)))
     sys.exit(2)
 
 qos = cf.get('mqtt_qos', 0)
