@@ -85,17 +85,23 @@ def on_message(client, device, msg):
                 command = command[len(subprefix):]
                 break
         else:
-            logging.error("MQTT topic %s has no recognized device reference, expected one of %s" % (msg.topic, str(device.keys())))
+            logging.error("MQTT topic %s has no recognized device reference, expected one of %s" %
+                          (msg.topic, ','.join(device.keys())))
             return
 
     # internal notification
-    if command == 'temperature' or command == 'energy' or command == 'sensors' or command.startswith('sensor/'):
+    if command == 'temperature' or\
+            command == 'energy' or\
+            command == 'sensors' or\
+            command == 'position' or\
+            command.startswith('sensor/'):
         return
 
     try:
-        action = str(msg.payload).lower()
+        action = msg.payload.decode('utf-8').lower()
         logging.debug("Received MQTT message " + msg.topic + " " + action)
 
+        # SP1/2 power control
         if command == 'power':
             if device.type == 'SP1' or device.type == 'SP2':
                 state = action == 'on'
@@ -112,6 +118,7 @@ def on_message(client, device, msg):
                     device.set_power(sid, state)
                     return
 
+        # MP1 power control
         if command.startswith('power/') and device.type == 'MP1':
             sid = int(command[6:])
             state = action == 'on'
@@ -119,6 +126,29 @@ def on_message(client, device, msg):
             device.set_power(sid, state)
             return
 
+        # Dooya curtain control
+        if command == 'action':
+            if device.type == 'Dooya DT360E':
+                if action == 'open':
+                    logging.debug("Opening curtain")
+                    device.open()
+                elif action == 'close':
+                    logging.debug("Closing curtain")
+                    device.close()
+                elif action == 'stop':
+                    logging.debug("Stopping curtain")
+                    device.stop()
+                else:
+                    logging.warning("Unrecognized curtain action " + action)
+                return
+
+        if command == 'set' and device.type == 'Dooya DT360E':
+            percentage = int(action)
+            logging.debug("Setting curtain position to {0}".format(percentage))
+            device.set_percentage_and_wait(percentage)
+            return
+
+        # RM2 record/replay control
         if device.type == 'RM2':
             file = dirname + "commands/" + command
             handy_file = file + '/' + action
@@ -146,7 +176,7 @@ def on_message(client, device, msg):
                 macro(device, file)
                 return
 
-        logging.debug("Unrecognized MQTT message " + action)
+        logging.warning("Unrecognized MQTT message " + action)
     except Exception:
         logging.exception("Error")
 
@@ -313,6 +343,8 @@ def get_device(cf):
             device = broadlink.a1(host=host, mac=mac, devtype=0x2714)
         elif device_type == 'mp1':
             device = broadlink.mp1(host=host, mac=mac, devtype=0x4EB5)
+        elif device_type == 'dooya':
+            device = broadlink.dooya(host=host, mac=mac, devtype=0x4E4D)
         else:
             logging.error('Incorrect device configured: ' + device_type)
             sys.exit(2)
@@ -321,8 +353,8 @@ def get_device(cf):
 
 def configure_device(device, mqtt_prefix):
     device.auth()
-    logging.debug('Connected to %s Broadlink device at \'%s\' (MAC %s)' % (device.type, device.host[0],
-                                                                        ':'.join(format(s, '02x') for s in device.mac[::-1])))
+    logging.debug('Connected to \'%s\' Broadlink device at \'%s\' (MAC %s) and started listening for commands at MQTT topic having prefix \'%s\' '
+                  % (device.type, device.host[0], ':'.join(format(s, '02x') for s in device.mac[::-1]), mqtt_prefix))
 
     broadlink_rm_temperature_interval = cf.get('broadlink_rm_temperature_interval', 0)
     if device.type == 'RM2' and broadlink_rm_temperature_interval > 0:
@@ -349,6 +381,16 @@ def configure_device(device, mqtt_prefix):
         scheduler = sched.scheduler(time.time, time.sleep)
         scheduler.enter(broadlink_a1_sensors_interval, 1, broadlink_a1_sensors_timer,
                         [scheduler, broadlink_a1_sensors_interval, device, mqtt_prefix])
+        # scheduler.run()
+        tt = SchedulerThread(scheduler)
+        tt.daemon = True
+        tt.start()
+
+    broadlink_dooya_position_interval = cf.get('broadlink_dooya_position_interval', 0)
+    if device.type == 'Dooya DT360E' and broadlink_dooya_position_interval > 0:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        scheduler.enter(broadlink_dooya_position_interval, 1, broadlink_dooya_position_timer,
+                        [scheduler, broadlink_dooya_position_interval, device, mqtt_prefix])
         # scheduler.run()
         tt = SchedulerThread(scheduler)
         tt.daemon = True
@@ -399,6 +441,18 @@ def broadlink_a1_sensors_timer(scheduler, delay, device, mqtt_prefix):
                 value = str(sensors[name])
                 logging.debug("Sending A1 %s '%s' to topic '%s'" % (name, value, topic))
                 mqttc.publish(topic, value, qos=qos, retain=retain)
+    except:
+        logging.exception("Error")
+
+
+def broadlink_dooya_position_timer(scheduler, delay, device, mqtt_prefix):
+    scheduler.enter(delay, 1, broadlink_dooya_position_timer, [scheduler, delay, device, mqtt_prefix])
+
+    try:
+        percentage = str(device.get_percentage())
+        topic = mqtt_prefix + "position"
+        logging.debug("Sending Dooya position " + percentage + " to topic " + topic)
+        mqttc.publish(topic, percentage, qos=qos, retain=retain)
     except:
         logging.exception("Error")
 

@@ -19,3 +19,9 @@ class TestDevice:
 
     def check_sensors_raw(self):
         return {'temperature': 23.5, 'humidity': 36, 'light': 1, 'air_quality': 3, 'noise': 2}
+
+    def get_percentage(self):
+        return 33
+
+    def open(self):
+        pass

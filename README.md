@@ -1,4 +1,12 @@
 # MQTT client to control BroadLink devices
+
+## Supported devices
+   * **RM Pro/RM2/RM3 mini** IR/RF controllers (device_type = 'rm')  
+   * **SP1/SP2** smart plugs (device_type = 'sp1' or 'sp2')  
+   * **A1** sensor (device_type = 'a1')  
+   * **MP1** power strip (device_type = 'mp1')  
+   * **Dooya DT360E** curtain motor (device_type = 'dooya')  
+
  
 ## Installation
 Clone *broadlink-mqtt* repository using  
@@ -79,20 +87,36 @@ To switch power on (off) on outlet number N need to send command `on` (`off`) to
 switch on 2-nd outlet: `on` -> `broadlink/power/2`
 
 ## Subscription to current temperature (RM2 device)
-Need to set `broadlink_rm_temperature_interval` configuration parameter to number of seconds between periodic updates.
+Need to set `broadlink_rm_temperature_interval` configuration parameter to a number of seconds between periodic updates.
 E.g. 
 `broadlink_rm_temperature_interval`=120
 means current temperature will be published to topic `broadlink/temperature` every 2 minutes
 
 ## Subscription to current used energy (SP2 device)
-Need to set `broadlink_sp_energy_interval` configuration parameter to number of seconds between periodic updates.
+Need to set `broadlink_sp_energy_interval` configuration parameter to a number of seconds between periodic updates.
 E.g. 
 `broadlink_sp_energy_interval`=120
 means current used energy will be published to topic `broadlink/energy` every 2 minutes
 
 ## Subscription to current sensors data (A1 device)
-Need to set `broadlink_a1_sensors_interval` configuration parameter to number of seconds between periodic updates.
+Need to set `broadlink_a1_sensors_interval` configuration parameter to a number of seconds between periodic updates.
 E.g. 
 `broadlink_a1_sensors_interval`=120
 means current sensors data will be published to topics `broadlink/sensors/[temperature/humidity/light/air_quality/noise]` every 2 minutes
+
+## MQTT commands to control curtain motor (Dooya DT360E device)
+To open/close curtains need to send a command to `broadlink/action` topic.  
+Possible commands are:  
+  - `open` to open curtains
+  - `close` to close curtains
+  - `stop` to stop curtains in the current state  
+
+Also it's possible to set fixed position of curtains sending numeric position in percents to the topic `broadlink/set`
+
+## Subscription to current curtain position (Dooya DT360E device)
+Need to set `broadlink_dooya_position_interval` configuration parameter to a number of seconds between periodic updates.
+E.g. 
+`broadlink_dooya_position_interval`=30
+means current curtain position in percents will be published to topic `broadlink/position` every 30 seconds  
+
 
