@@ -1,11 +1,11 @@
 # MQTT client to control BroadLink devices
 
 ## Supported devices
-   * **RM Pro/RM2/RM3 mini** IR/RF controllers (device_type = 'rm')  
-   * **SP1/SP2** smart plugs (device_type = 'sp1' or 'sp2')  
-   * **A1** sensor (device_type = 'a1')  
-   * **MP1** power strip (device_type = 'mp1')  
-   * **Dooya DT360E** curtain motor (device_type = 'dooya')  
+   * [**RM Pro / RM2 / RM3 mini**](#mqtt-commands-to-control-irrf-rm2rm3-devices) IR/RF controllers (device_type = 'rm')  
+   * [**SP1/SP2** smart plugs](#mqtt-commands-to-control-power-sp1sp2-devices) (device_type = 'sp1' or 'sp2')  
+   * [**A1**](#subscription-to-current-sensors-data-a1-device) sensor (device_type = 'a1')  
+   * [**MP1**](#mqtt-commands-to-control-power-mp1-device) power strip (device_type = 'mp1')  
+   * [**Dooya DT360E**](#mqtt-commands-to-control-curtain-motor-dooya-dt360e-device) curtain motor (device_type = 'dooya')  
    * **BG1** BG smart socket (device_type = 'bg1')  
 
  
@@ -40,7 +40,7 @@ Format supports next placeholders:
 ## Start
 Just start `mqtt.py` script using Python interpreter
 
-## MQTT commands to control IR (RM2/RM3 devices)
+## MQTT commands to control IR/RF (RM2/RM3 devices)
 ### Recording (IR or RF)
 To record new command just send `record` message for IR command or `recordrf` for RF command to the topic `broadlink/COMMAND_ID`,  
 where COMMAND_ID is any identifier that can be used for file name (slashes are also allowed)  
@@ -79,19 +79,14 @@ Macros scenario file could contain:
  - pause instructions (`pause DELAY_IN_MILLISECONDS`)
  - comments (lines started with `#`)
  
-## MQTT commands to control power (SP1/SP2 devices)
-To switch power on (off) need to send command `on` (`off`) to `broadlink/power` topic
-
-## MQTT commands to control power (MP1 device)
-To switch power on (off) on outlet number N need to send command `on` (`off`) to `broadlink/power/N` topic.
-**Example:**  
-switch on 2-nd outlet: `on` -> `broadlink/power/2`
-
 ## Subscription to current temperature (RM2 device)
 Need to set `broadlink_rm_temperature_interval` configuration parameter to a number of seconds between periodic updates.
 E.g. 
 `broadlink_rm_temperature_interval`=120
 means current temperature will be published to topic `broadlink/temperature` every 2 minutes
+
+## MQTT commands to control power (SP1/SP2 devices)
+To switch power on (off) need to send command `on` (`off`) to `broadlink/power` topic
 
 ## Subscription to current used energy (SP2 device)
 Need to set `broadlink_sp_energy_interval` configuration parameter to a number of seconds between periodic updates.
@@ -104,6 +99,11 @@ Need to set `broadlink_a1_sensors_interval` configuration parameter to a number 
 E.g. 
 `broadlink_a1_sensors_interval`=120
 means current sensors data will be published to topics `broadlink/sensors/[temperature/humidity/light/air_quality/noise]` every 2 minutes
+
+## MQTT commands to control power (MP1 device)
+To switch power on (off) on outlet number N need to send command `on` (`off`) to `broadlink/power/N` topic.
+**Example:**  
+switch on 2-nd outlet: `on` -> `broadlink/power/2`
 
 ## MQTT commands to control curtain motor (Dooya DT360E device)
 To open/close curtains need to send a command to `broadlink/action` topic.  
