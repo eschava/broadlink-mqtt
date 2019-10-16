@@ -103,7 +103,7 @@ def on_message(client, device, msg):
         action = msg.payload.decode('utf-8').lower()
         logging.debug("Received MQTT message " + msg.topic + " " + action)
 
-        # SP1/2 power control
+        # SP1/2 / MP1/ BG1 power control
         if command == 'power':
             if device.type == 'SP1' or device.type == 'SP2':
                 state = action == 'on'
@@ -120,12 +120,36 @@ def on_message(client, device, msg):
                     device.set_power(sid, state)
                     return
 
+            if device.type == 'BG1':
+                state = action == 'on'
+                logging.debug("Setting power state of all sockets to {0}".format(state))
+                device.set_state(pwr1=state, pwr2=state)
+                return
+
         # MP1 power control
         if command.startswith('power/') and device.type == 'MP1':
             sid = int(command[6:])
             state = action == 'on'
             logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
             device.set_power(sid, state)
+            return
+
+        # BG1 power control
+        if command.startswith('power/') and device.type == 'BG1':
+            sid = int(command[6:])
+            state = action == 'on'
+            logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
+            if sid == 1:
+                device.set_state(pwr1=state)
+            elif sid == 2:
+                device.set_state(pwr2=state)
+            return
+
+        # BG1 led brightness
+        if command == 'brightness' and device.type == 'BG1':
+            state = int(action)
+            logging.debug("Setting led brightness to {0}".format(state))
+            device.set_state(idcbrightness=state)
             return
 
         # Dooya curtain control

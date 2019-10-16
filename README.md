@@ -2,11 +2,11 @@
 
 ## Supported devices
    * [**RM Pro / RM2 / RM3 mini**](#mqtt-commands-to-control-irrf-rm2rm3-devices) IR/RF controllers (device_type = 'rm')  
-   * [**SP1/SP2** smart plugs](#mqtt-commands-to-control-power-sp1sp2-devices) (device_type = 'sp1' or 'sp2')  
+   * [**SP1/SP2**](#mqtt-commands-to-control-power-sp1sp2-devices) smart plugs (device_type = 'sp1' or 'sp2')  
    * [**A1**](#subscription-to-current-sensors-data-a1-device) sensor (device_type = 'a1')  
    * [**MP1**](#mqtt-commands-to-control-power-mp1-device) power strip (device_type = 'mp1')  
    * [**Dooya DT360E**](#mqtt-commands-to-control-curtain-motor-dooya-dt360e-device) curtain motor (device_type = 'dooya')  
-   * **BG1** BG smart socket (device_type = 'bg1')  
+   * [**BG1**](#mqtt-commands-to-control-bg1-device) BG smart socket (device_type = 'bg1')  
 
  
 ## Installation
@@ -80,7 +80,7 @@ Macros scenario file could contain:
  - comments (lines started with `#`)
  
 ## Subscription to current temperature (RM2 device)
-Need to set `broadlink_rm_temperature_interval` configuration parameter to a number of seconds between periodic updates.
+Need to set `broadlink_rm_temperature_interval` configuration parameter to a number of seconds between periodic updates.  
 E.g. 
 `broadlink_rm_temperature_interval`=120
 means current temperature will be published to topic `broadlink/temperature` every 2 minutes
@@ -89,19 +89,19 @@ means current temperature will be published to topic `broadlink/temperature` eve
 To switch power on (off) need to send command `on` (`off`) to `broadlink/power` topic
 
 ## Subscription to current used energy (SP2 device)
-Need to set `broadlink_sp_energy_interval` configuration parameter to a number of seconds between periodic updates.
-E.g. 
-`broadlink_sp_energy_interval`=120
+Need to set `broadlink_sp_energy_interval` configuration parameter to a number of seconds between periodic updates.  
+E.g.  
+`broadlink_sp_energy_interval`=120  
 means current used energy will be published to topic `broadlink/energy` every 2 minutes
 
 ## Subscription to current sensors data (A1 device)
-Need to set `broadlink_a1_sensors_interval` configuration parameter to a number of seconds between periodic updates.
-E.g. 
+Need to set `broadlink_a1_sensors_interval` configuration parameter to a number of seconds between periodic updates.  
+E.g.  
 `broadlink_a1_sensors_interval`=120
-means current sensors data will be published to topics `broadlink/sensors/[temperature/humidity/light/air_quality/noise]` every 2 minutes
+means current sensors data will be published to topics `broadlink/sensors/[temperature/humidity/light/air_quality/noise]` every 2 minutes  
 
 ## MQTT commands to control power (MP1 device)
-To switch power on (off) on outlet number N need to send command `on` (`off`) to `broadlink/power/N` topic.
+To switch power on (off) on outlet number N need to send command `on` (`off`) to `broadlink/power/N` topic.  
 **Example:**  
 switch on 2-nd outlet: `on` -> `broadlink/power/2`
 
@@ -115,9 +115,21 @@ Possible commands are:
 Also it's possible to set fixed position of curtains sending numeric position in percents to the topic `broadlink/set`
 
 ## Subscription to current curtain position (Dooya DT360E device)
-Need to set `broadlink_dooya_position_interval` configuration parameter to a number of seconds between periodic updates.
-E.g. 
-`broadlink_dooya_position_interval`=30
+Need to set `broadlink_dooya_position_interval` configuration parameter to a number of seconds between periodic updates.  
+E.g.  
+`broadlink_dooya_position_interval`=30  
 means current curtain position in percents will be published to topic `broadlink/position` every 30 seconds  
 
+## MQTT commands to control BG1 device
+To change brightness of LED need to send value in percents to `broadlink/brightness` topic  
+To switch power on (off) on all (or single only) outlets need to send command `on` (`off`) to `broadlink/power` topic.  
+To switch power on (off) on outlet number N need to send command `on` (`off`) to `broadlink/power/N` topic.  
+**Example:**  
+switch on 2-nd outlet: `on` -> `broadlink/power/2`  
+
+## Subscription to current state of BG1 device
+Need to set `broadlink_bg1_state_interval` configuration parameter to a number of seconds between periodic updates.  
+E.g.  
+`broadlink_bg1_state_interval`=120  
+means current state will be published to topics `broadlink/state/[pwr/pwr1/pwr2/maxworktime/maxworktime1/maxworktime2/idcbrightness]` every 2 minutes    
 
