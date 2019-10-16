@@ -25,3 +25,6 @@ class TestDevice:
 
     def open(self):
         pass
+
+    def get_state(self):
+        return {'pwr': 1, 'pwr1': 1, 'pwr2': 0, 'maxworktime': 60, 'maxworktime1': 60, 'maxworktime2': 0, 'idcbrightness': 50}

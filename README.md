@@ -6,6 +6,7 @@
    * **A1** sensor (device_type = 'a1')  
    * **MP1** power strip (device_type = 'mp1')  
    * **Dooya DT360E** curtain motor (device_type = 'dooya')  
+   * **BG1** BG smart socket (device_type = 'bg1')  
 
  
 ## Installation

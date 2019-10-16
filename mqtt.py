@@ -90,10 +90,12 @@ def on_message(client, device, msg):
             return
 
     # internal notification
-    if command == 'temperature' or\
-            command == 'energy' or\
-            command == 'sensors' or\
-            command == 'position' or\
+    if command == 'temperature' or \
+            command == 'energy' or \
+            command == 'sensors' or \
+            command == 'position' or \
+            command == 'state' or \
+            command.startswith('state/') or \
             command.startswith('sensor/'):
         return
 
@@ -345,6 +347,8 @@ def get_device(cf):
             device = broadlink.mp1(host=host, mac=mac, devtype=0x4EB5)
         elif device_type == 'dooya':
             device = broadlink.dooya(host=host, mac=mac, devtype=0x4E4D)
+        elif device_type == 'bg1':
+            device = broadlink.bg1(host=host, mac=mac, devtype=0x51E3)
         else:
             logging.error('Incorrect device configured: ' + device_type)
             sys.exit(2)
@@ -391,6 +395,16 @@ def configure_device(device, mqtt_prefix):
         scheduler = sched.scheduler(time.time, time.sleep)
         scheduler.enter(broadlink_dooya_position_interval, 1, broadlink_dooya_position_timer,
                         [scheduler, broadlink_dooya_position_interval, device, mqtt_prefix])
+        # scheduler.run()
+        tt = SchedulerThread(scheduler)
+        tt.daemon = True
+        tt.start()
+
+    broadlink_bg1_state_interval = cf.get('broadlink_bg1_state_interval', 0)
+    if device.type == 'BG1' and broadlink_bg1_state_interval > 0:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        scheduler.enter(broadlink_bg1_state_interval, 1, broadlink_bg1_state_timer,
+                        [scheduler, broadlink_bg1_state_interval, device, mqtt_prefix])
         # scheduler.run()
         tt = SchedulerThread(scheduler)
         tt.daemon = True
@@ -453,6 +467,27 @@ def broadlink_dooya_position_timer(scheduler, delay, device, mqtt_prefix):
         topic = mqtt_prefix + "position"
         logging.debug("Sending Dooya position " + percentage + " to topic " + topic)
         mqttc.publish(topic, percentage, qos=qos, retain=retain)
+    except:
+        logging.exception("Error")
+
+
+def broadlink_bg1_state_timer(scheduler, delay, device, mqtt_prefix):
+    scheduler.enter(delay, 1, broadlink_bg1_state_timer, [scheduler, delay, device, mqtt_prefix])
+
+    try:
+        is_json = cf.get('broadlink_bg1_state_json', False)
+        state = device.get_state()
+        if is_json:
+            topic = mqtt_prefix + "state"
+            value = json.dumps(state)
+            logging.debug("Sending BG1 state '%s' to topic '%s'" % (value, topic))
+            mqttc.publish(topic, value, qos=qos, retain=retain)
+        else:
+            for name in state:
+                topic = mqtt_prefix + "state/" + name
+                value = str(state[name])
+                logging.debug("Sending BG1 %s '%s' to topic '%s'" % (name, value, topic))
+                mqttc.publish(topic, value, qos=qos, retain=retain)
     except:
         logging.exception("Error")
 
