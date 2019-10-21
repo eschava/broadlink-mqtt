@@ -11,6 +11,18 @@ class TestDevice:
     def check_temperature(self):
         return 23.5
 
+    def enter_learning(self):
+        pass
+
+    def check_data(self):
+        payload = bytearray(5)
+        payload[0] = 0xAA
+        payload[1] = 0xBB
+        payload[2] = 0xCC
+        payload[3] = 0xDD
+        payload[4] = 0xEE
+        return payload
+
     def send_data(self, data):
         pass
 

@@ -10,6 +10,7 @@ import logging.config
 import socket
 import sched
 import json
+import binascii
 from threading import Thread
 from test import TestDevice
 
@@ -250,7 +251,7 @@ def record(device, file):
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(file, 'wb') as f:
-            f.write(str(ir_packet).encode('hex'))
+            f.write(binascii.hexlify(ir_packet))
         logging.debug("Done")
     else:
         logging.warn("No command received")
@@ -290,7 +291,7 @@ def record_rf(device, file):
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(file, 'wb') as f:
-            f.write(str(rf_packet).encode('hex'))
+            f.write(binascii.hexlify(rf_packet))
         logging.debug("Done")
     else:
         logging.warn("No command received")
@@ -300,7 +301,7 @@ def replay(device, file):
     logging.debug("Replaying command from file " + file)
     with open(file, 'rb') as f:
         ir_packet = f.read()
-    device.send_data(ir_packet.strip().decode('hex'))
+    device.send_data(binascii.unhexlify(ir_packet.strip()))
 
 
 def macro(device, file):
