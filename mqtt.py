@@ -507,7 +507,7 @@ def broadlink_bg1_state_timer(scheduler, delay, device, mqtt_prefix):
             value = json.dumps(state)
             logging.debug("Sending BG1 state '%s' to topic '%s'" % (value, topic))
             mqttc.publish(topic, value, qos=qos, retain=retain)
-        else:
+        elif state is not None:
             for name in state:
                 topic = mqtt_prefix + "state/" + name
                 value = str(state[name])
