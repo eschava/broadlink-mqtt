@@ -415,6 +415,16 @@ def configure_device(device, mqtt_prefix):
         tt.daemon = True
         tt.start()
 
+    broadlink_mp1_state_interval = cf.get('broadlink_mp1_state_interval', 0)
+    if device.type == 'MP1' and broadlink_mp1_state_interval > 0:
+        scheduler = sched.scheduler(time.time, time.sleep)
+        scheduler.enter(broadlink_mp1_state_interval, 1, broadlink_mp1_state_timer,
+                        [scheduler, broadlink_mp1_state_interval, device, mqtt_prefix])
+        # scheduler.run()
+        tt = SchedulerThread(scheduler)
+        tt.daemon = True
+        tt.start()
+
     broadlink_dooya_position_interval = cf.get('broadlink_dooya_position_interval', 0)
     if device.type == 'Dooya DT360E' and broadlink_dooya_position_interval > 0:
         scheduler = sched.scheduler(time.time, time.sleep)
@@ -479,6 +489,27 @@ def broadlink_a1_sensors_timer(scheduler, delay, device, mqtt_prefix):
                 topic = mqtt_prefix + "sensor/" + name
                 value = str(sensors[name])
                 logging.debug("Sending A1 %s '%s' to topic '%s'" % (name, value, topic))
+                mqttc.publish(topic, value, qos=qos, retain=retain)
+    except:
+        logging.exception("Error")
+
+
+def broadlink_mp1_state_timer(scheduler, delay, device, mqtt_prefix):
+    scheduler.enter(delay, 1, broadlink_mp1_state_timer, [scheduler, delay, device, mqtt_prefix])
+
+    try:
+        is_json = cf.get('broadlink_mp1_state_json', False)
+        state = device.check_power()
+        if is_json:
+            topic = mqtt_prefix + "state"
+            value = json.dumps(state)
+            logging.debug("Sending MP1 state '%s' to topic '%s'" % (value, topic))
+            mqttc.publish(topic, value, qos=qos, retain=retain)
+        elif state is not None:
+            for name in state:
+                topic = mqtt_prefix + "state/" + name
+                value = str(state[name])
+                logging.debug("Sending MP1 %s '%s' to topic '%s'" % (name, value, topic))
                 mqttc.publish(topic, value, qos=qos, retain=retain)
     except:
         logging.exception("Error")
