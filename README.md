@@ -44,6 +44,8 @@ Just start `mqtt.py` script using Python interpreter
 ### Recording (IR or RF)
 To record new command just send `record` message for IR command or `recordrf` for RF command to the topic `broadlink/COMMAND_ID`,  
 where COMMAND_ID is any identifier that can be used for file name (slashes are also allowed)  
+> **NOTE**: It seems that Python3 is a must for recording RF signals  
+
 **Example**: to record power button for Samsung TV send  
 `record` -> `broadlink/tv/samsung/power`  
 and recorded interpretation of IR signal will be saved to file `commands/tv/samsung/power`

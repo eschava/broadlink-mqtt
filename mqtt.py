@@ -143,7 +143,7 @@ def on_message(client, device, msg):
             if sid == 1:
                 device.set_state(pwr1=state)
             elif sid == 2:
-                device.set_state(pwr2=state)
+                 device.set_state(pwr2=state)
             return
 
         # BG1 led brightness
@@ -306,7 +306,7 @@ def replay(device, file):
 
 def macro(device, file):
     logging.debug("Replaying macro from file " + file)
-    with open(file, 'rb') as f:
+    with open(file, 'r') as f:
         for line in f:
             line = line.strip(' \n\r\t')
             if len(line) == 0 or line.startswith("#"):
