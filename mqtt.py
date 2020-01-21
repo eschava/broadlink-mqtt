@@ -217,7 +217,7 @@ def on_connect(client, device, flags, result_code):
 
 # noinspection PyUnusedLocal
 def on_disconnect(client, device, rc):
-    logging.debug("OOOOPS! Broadlink disconnects")
+    logging.warn("OOOOPS! MQTT disconnection")
     time.sleep(10)
 
 
@@ -584,12 +584,13 @@ if __name__ == '__main__':
         mqttc.tls_insecure_set(True)
 
     mqttc.username_pw_set(cf.get('mqtt_username'), cf.get('mqtt_password'))
-    mqttc.connect(cf.get('mqtt_broker', 'localhost'), int(cf.get('mqtt_port', '1883')), 60)
 
     while True:
         try:
+            mqttc.connect(cf.get('mqtt_broker', 'localhost'), int(cf.get('mqtt_port', '1883')), 60)
             mqttc.loop_forever()
         except socket.error:
+            logging.warn("Cannot connect to MQTT server, will try to reconnect in 5 seconds")
             time.sleep(5)
         except KeyboardInterrupt:
             sys.exit(0)
