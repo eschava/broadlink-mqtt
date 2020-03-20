@@ -11,6 +11,7 @@ import socket
 import sched
 import json
 import binascii
+import types
 from threading import Thread
 from test import TestDevice
 
@@ -159,12 +160,15 @@ def on_message(client, device, msg):
                 if action == 'open':
                     logging.debug("Opening curtain")
                     device.open()
+                    device.publish(100)
                 elif action == 'close':
                     logging.debug("Closing curtain")
                     device.close()
+                    device.publish(0)
                 elif action == 'stop':
                     logging.debug("Stopping curtain")
                     device.stop()
+                    device.publish(device.get_percentage())
                 else:
                     logging.warning("Unrecognized curtain action " + action)
                 return
@@ -173,6 +177,7 @@ def on_message(client, device, msg):
             percentage = int(action)
             logging.debug("Setting curtain position to {0}".format(percentage))
             device.set_percentage_and_wait(percentage)
+            device.publish(device.get_percentage())
             return
 
         # RM2 record/replay control
@@ -425,15 +430,28 @@ def configure_device(device, mqtt_prefix):
         tt.daemon = True
         tt.start()
 
-    broadlink_dooya_position_interval = cf.get('broadlink_dooya_position_interval', 0)
-    if device.type == 'Dooya DT360E' and broadlink_dooya_position_interval > 0:
-        scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enter(broadlink_dooya_position_interval, 1, broadlink_dooya_position_timer,
-                        [scheduler, broadlink_dooya_position_interval, device, mqtt_prefix])
-        # scheduler.run()
-        tt = SchedulerThread(scheduler)
-        tt.daemon = True
-        tt.start()
+    if device.type == 'Dooya DT360E':
+        # noinspection PyUnusedLocal
+        def publish(dev, percentage):
+            try:
+                percentage = str(percentage)
+                topic = mqtt_prefix + "position"
+                logging.debug("Sending Dooya position " + percentage + " to topic " + topic)
+                mqttc.publish(topic, percentage, qos=qos, retain=retain)
+            except:
+                logging.exception("Error")
+
+        device.publish = types.MethodType(publish, device)
+
+        broadlink_dooya_position_interval = cf.get('broadlink_dooya_position_interval', 0)
+        if broadlink_dooya_position_interval > 0:
+            scheduler = sched.scheduler(time.time, time.sleep)
+            scheduler.enter(broadlink_dooya_position_interval, 1, broadlink_dooya_position_timer,
+                            [scheduler, broadlink_dooya_position_interval, device])
+            # scheduler.run()
+            tt = SchedulerThread(scheduler)
+            tt.daemon = True
+            tt.start()
 
     broadlink_bg1_state_interval = cf.get('broadlink_bg1_state_interval', 0)
     if device.type == 'BG1' and broadlink_bg1_state_interval > 0:
@@ -515,16 +533,9 @@ def broadlink_mp1_state_timer(scheduler, delay, device, mqtt_prefix):
         logging.exception("Error")
 
 
-def broadlink_dooya_position_timer(scheduler, delay, device, mqtt_prefix):
-    scheduler.enter(delay, 1, broadlink_dooya_position_timer, [scheduler, delay, device, mqtt_prefix])
-
-    try:
-        percentage = str(device.get_percentage())
-        topic = mqtt_prefix + "position"
-        logging.debug("Sending Dooya position " + percentage + " to topic " + topic)
-        mqttc.publish(topic, percentage, qos=qos, retain=retain)
-    except:
-        logging.exception("Error")
+def broadlink_dooya_position_timer(scheduler, delay, device):
+    scheduler.enter(delay, 1, broadlink_dooya_position_timer, [scheduler, delay, device])
+    device.publish(device.get_percentage())
 
 
 def broadlink_bg1_state_timer(scheduler, delay, device, mqtt_prefix):
