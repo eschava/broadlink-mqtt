@@ -180,8 +180,8 @@ def on_message(client, device, msg):
             device.publish(device.get_percentage())
             return
 
-        # RM2 record/replay control
-        if device.type == 'RM2':
+        # RM2/RM4 record/replay control
+        if device.type == 'RM2' or device.type == 'RM4':
             file = dirname + "commands/" + command
             handy_file = file + '/' + action
 
@@ -391,7 +391,7 @@ def configure_device(device, mqtt_prefix):
                   % (device.type, device.host[0], ':'.join(format(s, '02x') for s in device.mac[::-1]), mqtt_prefix))
 
     broadlink_rm_temperature_interval = cf.get('broadlink_rm_temperature_interval', 0)
-    if device.type == 'RM2' and broadlink_rm_temperature_interval > 0:
+    if (device.type == 'RM2' or device.type == 'RM4') and broadlink_rm_temperature_interval > 0:
         scheduler = sched.scheduler(time.time, time.sleep)
         scheduler.enter(broadlink_rm_temperature_interval, 1, broadlink_rm_temperature_timer,
                         [scheduler, broadlink_rm_temperature_interval, device, mqtt_prefix])
