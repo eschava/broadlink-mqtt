@@ -1,7 +1,7 @@
 # MQTT client to control BroadLink devices
 
 ## Supported devices
-   * [**RM Pro / RM2 / RM3 mini**](#rm2rm3) IR/RF controllers (device_type = 'rm')  
+   * [**RM Pro / RM2 / RM3 mini / RM4**](#rm2rm3rm4) IR/RF controllers (device_type = 'rm' or 'rm4')  
    * [**SP1/SP2**](#sp1sp2) smart plugs (device_type = 'sp1' or 'sp2')  
    * [**A1**](#a1) sensor (device_type = 'a1')  
    * [**MP1**](#mp1) power strip (device_type = 'mp1')  
@@ -40,7 +40,7 @@ Format supports next placeholders:
 ## Start
 Just start `mqtt.py` script using Python interpreter
 
-# RM2/RM3
+# RM2/RM3/RM4
 ### MQTT commands to control IR/RF
 #### Recording (IR or RF)
 To record new command just send `record` message for IR command or `recordrf` for RF command to the topic `broadlink/COMMAND_ID`,  
@@ -82,7 +82,7 @@ Macros scenario file could contain:
  - pause instructions (`pause DELAY_IN_MILLISECONDS`)
  - comments (lines started with `#`)
  
-### Subscription to current temperature (RM2 device)
+### Subscription to current temperature (RM2/RM4 devices)
 Need to set `broadlink_rm_temperature_interval` configuration parameter to a number of seconds between periodic updates.  
 E.g. 
 `broadlink_rm_temperature_interval`=120
