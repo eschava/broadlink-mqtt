@@ -367,6 +367,8 @@ def get_device(cf):
         mac = bytearray.fromhex(cf.get('device_mac').replace(':', ' '))
         if device_type == 'rm':
             device = broadlink.rm(host=host, mac=mac, devtype=0x2712)
+        elif device_type == 'rm4':
+            device = broadlink.rm4(host=host, mac=mac, devtype=0x51da)
         elif device_type == 'sp1':
             device = broadlink.sp1(host=host, mac=mac, devtype=0)
         elif device_type == 'sp2':
