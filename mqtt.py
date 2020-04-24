@@ -108,7 +108,7 @@ def on_message(client, device, msg):
         # SP1/2 / MP1/ BG1 power control
         if command == 'power':
             if device.type == 'SP1' or device.type == 'SP2':
-                state = action == 'on'
+                state = action == 'on' or action == '1'
                 logging.debug("Setting power state to {0}".format(state))
                 device.set_power(1 if state else 0)
                 return
@@ -117,13 +117,13 @@ def on_message(client, device, msg):
                 parts = action.split("/", 2)
                 if len(parts) == 2:
                     sid = int(parts[0])
-                    state = parts[1] == 'on'
+                    state = parts[1] == 'on' or parts[1] == '1'
                     logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
                     device.set_power(sid, state)
                     return
 
             if device.type == 'BG1':
-                state = action == 'on'
+                state = action == 'on' or action == '1'
                 logging.debug("Setting power state of all sockets to {0}".format(state))
                 device.set_state(pwr1=state, pwr2=state)
                 return
@@ -131,7 +131,7 @@ def on_message(client, device, msg):
         # MP1 power control
         if command.startswith('power/') and device.type == 'MP1':
             sid = int(command[6:])
-            state = action == 'on'
+            state = action == 'on' or action == '1'
             logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
             device.set_power(sid, state)
             return
@@ -139,7 +139,7 @@ def on_message(client, device, msg):
         # BG1 power control
         if command.startswith('power/') and device.type == 'BG1':
             sid = int(command[6:])
-            state = action == 'on'
+            state = action == 'on' or action == '1'
             logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
             if sid == 1:
                 device.set_state(pwr1=state)

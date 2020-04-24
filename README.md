@@ -90,7 +90,8 @@ means current temperature will be published to topic `broadlink/temperature` eve
 
 # SP1/SP2
 ### MQTT commands to control power
-To switch power on (off) need to send command `on` (`off`) to `broadlink/power` topic
+To switch power on (off) need to send command `on` (`off`) to `broadlink/power` topic  
+Commands `1` / `0` are also supported
 
 ### Subscription to current used energy (SP2 device)
 Need to set `broadlink_sp_energy_interval` configuration parameter to a number of seconds between periodic updates.  
@@ -108,6 +109,7 @@ means current sensors data will be published to topics `broadlink/sensors/[tempe
 # MP1
 ### MQTT commands to control power
 To switch power on (off) on outlet number N need to send command `on` (`off`) to `broadlink/power/N` topic.  
+Commands `1` / `0` are also supported  
 **Example:**  
 switch on 2-nd outlet: `on` -> `broadlink/power/2`
 
@@ -138,6 +140,7 @@ means current curtain position in percents will be published to topic `broadlink
 To change brightness of LED need to send value in percents to `broadlink/brightness` topic  
 To switch power on (off) on all (or single only) outlets need to send command `on` (`off`) to `broadlink/power` topic.  
 To switch power on (off) on outlet number N need to send command `on` (`off`) to `broadlink/power/N` topic.  
+Commands `1` / `0` are also supported  
 **Example:**  
 switch on 2-nd outlet: `on` -> `broadlink/power/2`  
 
