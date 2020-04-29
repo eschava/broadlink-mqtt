@@ -13,13 +13,22 @@
 Clone *broadlink-mqtt* repository using  
 `git clone https://github.com/eschava/broadlink-mqtt.git`  
 or download and unpack latest archive from  
-https://github.com/eschava/broadlink-mqtt/archive/master.zip  
+https://github.com/eschava/broadlink-mqtt/archive/master.zip
 
-Also need to install required Python modules using
-`pip install -r requirements.txt`  
+Ensure that a python development environment is setup:
+`sudo apt-get install python-pip python-dev`
+
+Ensure that the *libffi-dev* and *libssl-dev* packages are installed:
+`sudo apt-get install libffi-dev libssl-dev`
+
+From the newly created  *broadlink-mqtt* folder, install the required Python modules:
+`pip install -r requirements.txt`
 
 ## Configuration
-All configurable parameters are present in `mqtt.conf` file. But there is also `custom.conf` file. Changes from `custom.conf` overrides `mqtt.conf` and it's better to put changed configuration parameters there, to avoid conflicts while updating branch from repository.   
+By default, *broadlink-mqtt* will configure using parameters from `mqtt.conf`. This configuration file may be altered during a repository update, so another configuration file is provided for editing: `custom.conf`
+
+`custom.conf` overrides `mqtt.conf`. Copy the contents of `mqtt.conf` into `custom.conf` and continue editing only `custom.conf`. 
+
 Recorded commands are saved under the `commands/` folder  
 Macros are saved under the `macros/` folder
 
