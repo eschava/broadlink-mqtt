@@ -215,6 +215,9 @@ def on_message(client, device, msg):
 
 # noinspection PyUnusedLocal
 def on_connect(client, device, flags, result_code):
+    if cf.get('mqtt_birth_payload', False):
+        mqttc.publish(cf.get('mqtt_birth_topic', 'clients/broadlink'), payload=cf.get('mqtt_birth_payload'), qos=0, retain=False)
+
     topic = topic_prefix + '#'
     logging.debug("Connected to MQTT broker, subscribing to topic " + topic)
     mqttc.subscribe(topic, qos)
@@ -222,7 +225,7 @@ def on_connect(client, device, flags, result_code):
 
 # noinspection PyUnusedLocal
 def on_disconnect(client, device, rc):
-    logging.warn("OOOOPS! MQTT disconnection")
+    logging.warning("OOOOPS! MQTT disconnection")
     time.sleep(10)
 
 
@@ -584,7 +587,8 @@ if __name__ == '__main__':
     mqttc.on_connect = on_connect
     mqttc.on_disconnect = on_disconnect
 
-    mqttc.will_set('clients/broadlink', payload="Adios!", qos=0, retain=False)
+    if cf.get('mqtt_will_payload', False):
+        mqttc.will_set(cf.get('mqtt_will_topic', 'clients/broadlink'), payload=cf.get('mqtt_will_payload'), qos=0, retain=False)
 
     # Delays will be: 3, 6, 12, 24, 30, 30, ...
     # mqttc.reconnect_delay_set(delay=3, delay_max=30, exponential_backoff=True)
