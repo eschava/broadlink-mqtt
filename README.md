@@ -25,7 +25,7 @@ From the newly created  *broadlink-mqtt* folder, install the required Python mod
 `pip install -r requirements.txt`
 
 ## Configuration
-By default, *broadlink-mqtt* will configure using parameters from `mqtt.conf`. This configuration file may be altered during a repository update, so another configuration file is provided for editing: `custom.conf`
+By default, *broadlink-mqtt* will configure using parameters from `mqtt.conf`. This configuration file may be altered during a repository update, so another configuration file is provided for editing: `custom.conf`. This will not be overwritten when updating *broadlink-mqtt*.
 
 `custom.conf` overrides `mqtt.conf`. Copy the contents of `mqtt.conf` into `custom.conf` and continue editing only `custom.conf`. 
 
@@ -47,7 +47,43 @@ Format supports next placeholders:
 
 
 ## Start
-Just start `mqtt.py` script using Python interpreter
+Just start `mqtt.py` script using Python interpreter. You may have to use `python3`.
+
+### Auto-startup (Linux)
+(From https://github.com/eschava/broadlink-mqtt/issues/29#issuecomment-630254666)
+
+    sudo nano /lib/systemd/system/broadlink-mqtt.service
+
+Copy and paste the following, then save:
+
+`[Unit]`  
+`Description=Broadlink MQTT Service`  
+`After=multi-user.target`  
+`Conflicts=getty@tty1.service` 
+
+`[Service]`  
+`Type=simple`  
+`ExecStart=/usr/bin/python3 /home/pi/broadlink-mqtt/mqtt.py`  
+`StandardInput=tty-force`  
+
+`[Install]`  
+`WantedBy=multi-user.target`
+
+Reload the daemon:
+`sudo systemctl daemon-reload`
+
+To start the service:  
+`sudo systemctl start broadlink-mqtt.service`
+    
+To see the service status:  
+`sudo systemctl status broadlink-mqtt.service`
+    
+To stop the service:  
+`sudo systemctl stop broadlink-mqtt.service`
+    
+To restart the service:  
+`sudo systemctl restart broadlink-mqtt.service`
+
 
 # RM2/RM3/RM4
 ### MQTT commands to control IR/RF
