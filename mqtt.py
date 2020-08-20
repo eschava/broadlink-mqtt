@@ -14,6 +14,8 @@ import binascii
 import types
 from threading import Thread
 from test import TestDevice
+from pathlib import Path
+from os.path import abspath
 
 HAVE_TLS = True
 try:
@@ -22,11 +24,12 @@ except ImportError:
     HAVE_TLS = False
 
 # read initial config files
-dirname = os.path.dirname(os.path.abspath(__file__)) + '/'
-logging.config.fileConfig(dirname + 'logging.conf')
-CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + 'mqtt.conf')
-CONFIG_CUSTOM = os.getenv('BROADLINKMQTTCONFIGCUSTOM', dirname + 'custom.conf')
+dirname = os.getcwd()
 
+logging.config.fileConfig(Path(dirname) / 'logging.conf/')
+
+CONFIG = os.getenv('BROADLINKMQTTCONFIG', Path(dirname) / 'mqtt.conf/')
+CONFIG_CUSTOM = os.getenv('BROADLINKMQTTCONFIGCUSTOM', Path(dirname) / 'custom.conf')
 
 class Config(object):
     def __init__(self, filename=CONFIG, custom_filename=CONFIG_CUSTOM):
@@ -182,8 +185,9 @@ def on_message(client, device, msg):
 
         # RM2/RM4 record/replay control
         if device.type == 'RM2' or device.type == 'RM4':
-            file = dirname + "commands/" + command
-            handy_file = file + '/' + action
+            file = Path(dirname) / "commands/" / command
+            
+            handy_file = file / action
 
             if action == '' or action == 'auto':
                 record_or_replay(device, file)
@@ -204,7 +208,7 @@ def on_message(client, device, msg):
                 replay(device, file)
                 return
             elif action == 'macro':
-                file = dirname + "macros/" + command
+                file = Path(dirname) / "macros/" + command
                 macro(device, file)
                 return
 
@@ -244,7 +248,8 @@ def record_or_replay_rf(device, file):
 
 
 def record(device, file):
-    logging.debug("Recording command to file " + file)
+    logging.debug("Recording IR command to file " + abspath(file))
+    logging.debug("Starting learning mode. Press a button on your remote controller entro 30 seconds.")
     # receive packet
     device.enter_learning()
     ir_packet = None
@@ -266,7 +271,7 @@ def record(device, file):
 
 
 def record_rf(device, file):
-    logging.debug("Recording RF command to file " + file)
+    logging.debug("Recording RF command to file " + abspath(file))
     logging.debug("Learning RF Frequency, press and hold the button to learn...")
 
     device.sweep_frequency()
@@ -306,14 +311,14 @@ def record_rf(device, file):
 
 
 def replay(device, file):
-    logging.debug("Replaying command from file " + file)
+    logging.debug("Replaying command from file " + abspath(file))
     with open(file, 'rb') as f:
         ir_packet = f.read()
     device.send_data(binascii.unhexlify(ir_packet.strip()))
 
 
 def macro(device, file):
-    logging.debug("Replaying macro from file " + file)
+    logging.debug("Replaying macro from file " + abspath(file))
     with open(file, 'r') as f:
         for line in f:
             line = line.strip(' \n\r\t')
@@ -324,7 +329,7 @@ def macro(device, file):
                 logging.debug("Pause for " + str(pause) + " milliseconds")
                 time.sleep(pause / 1000.0)
             else:
-                command_file = dirname + "commands/" + line
+                command_file = Path(dirname) / "commands/" + line
                 replay(device, command_file)
 
 
