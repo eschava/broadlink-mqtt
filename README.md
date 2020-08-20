@@ -8,7 +8,7 @@
    * [**Dooya DT360E**](#dooya-dt360e) curtain motor (device_type = 'dooya')  
    * [**BG1**](#bg1) BG smart socket (device_type = 'bg1')  
 
- 
+
 ## Installation
 Clone *broadlink-mqtt* repository using  
 `git clone https://github.com/eschava/broadlink-mqtt.git`  
@@ -88,19 +88,28 @@ To restart the service:
 # RM2/RM3/RM4
 ### MQTT commands to control IR/RF
 #### Recording (IR or RF)
-To record new command just send `record` message for IR command or `recordrf` for RF command to the topic `broadlink/COMMAND_ID`,  
+To record new command just send `record` payload message for IR command or `recordrf` for RF command to the topic `broadlink/COMMAND_ID`,  
 where COMMAND_ID is any identifier that can be used for file name (slashes are also allowed)  
+
 > **NOTE**: It seems that Python3 is a must for recording RF signals  
 
-**Example**: to record power button for Samsung TV send  
-`record` -> `broadlink/tv/samsung/power`  
+**Example**: to record power button for Samsung TV write **`record`** to payload of topic `broadlink/tv/samsung/power`
+
+```
+record -> broadlink/tv/samsung/power
+```
+
 and recorded interpretation of IR signal will be saved to file `commands/tv/samsung/power`
 
 #### Replay
-To replay previously recorded command send `replay` message to the topic `broadlink/COMMAND_ID`,  
+To replay previously recorded command send `replay` payload message to the topic `broadlink/COMMAND_ID`,  
 where COMMAND_ID is identifier if the command  
-**Example**: to replay power button for Samsung TV send  
-`replay` -> `broadlink/tv/samsung/power`  
+**Example**: to replay power button for Samsung TV write **`replay`** to payload of topic `broadlink/tv/samsung/power`
+
+```
+replay -> broadlink/tv/samsung/power
+```
+
 and saved interpretation of IR signal will be replayed from file `commands/tv/samsung/power`
 
 Another format for replaying recorded command is using file name as a message and folder as MQTT topic.  
@@ -126,7 +135,7 @@ Macros scenario file could contain:
  - IR commands (same as `COMMAND_ID` in replay mode)
  - pause instructions (`pause DELAY_IN_MILLISECONDS`)
  - comments (lines started with `#`)
- 
+
 ### Subscription to current temperature (RM2/RM4 devices)
 Need to set `broadlink_rm_temperature_interval` configuration parameter to a number of seconds between periodic updates.  
 E.g. 
