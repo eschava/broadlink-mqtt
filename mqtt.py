@@ -250,12 +250,16 @@ def record_or_replay_rf(device, file):
 def record(device, file):
     logging.debug("Recording IR command to file " + abspath(file))
     logging.debug("Starting learning mode. Press a button on your remote controller in 30 seconds.")
+    # receive packet
     device.enter_learning()
-    device.check_data()
+    ir_packet = None
     attempt = 0
-    while ir_packet is None and attempt < 2:
+    while ir_packet is None and attempt < 6:
         time.sleep(5)
-        ir_packet = device.check_data()
+        try:
+            ir_packet = device.check_data()
+        except Exception as e: 
+            logging.warning(str(e) + '. Did you hit the remote button?')
         attempt = attempt + 1
     if ir_packet is not None:
         # write to file
@@ -264,9 +268,9 @@ def record(device, file):
             os.makedirs(directory)
         with open(file, 'wb') as f:
             f.write(binascii.hexlify(ir_packet))
-        logging.debug("Done")
+        logging.debug("Done. Created file " + abspath(file))
     else:
-        logging.warn("No command received")
+        logging.warning("No command received in 30 seconds. Exiting learning mode.")
 
 
 def record_rf(device, file):
