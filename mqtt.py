@@ -259,7 +259,7 @@ def record(device, file):
         try:
             ir_packet = device.check_data()
         except Exception as e: 
-            logging.warning(str(e) + '. Did you hit the remote button?')
+            logging.warning(str(e) + '. Did you hit the IR remote button?')
         attempt = attempt + 1
     if ir_packet is not None:
         # write to file
@@ -299,7 +299,10 @@ def record_rf(device, file):
     attempt = 0
     while rf_packet is None and attempt < 6:
         time.sleep(5)
-        rf_packet = device.check_data()
+        try:
+            rf_packet = device.check_data()
+        except Exception as e: 
+            logging.warning(str(e) + '. Did you hit the RF remote button?')
         attempt = attempt + 1
     if rf_packet is not None:
         # write to file
@@ -308,9 +311,9 @@ def record_rf(device, file):
             os.makedirs(directory)
         with open(file, 'wb') as f:
             f.write(binascii.hexlify(rf_packet))
-        logging.debug("Done")
+        logging.debug("Done. Created file " + abspath(file))
     else:
-        logging.warning("No command received")
+        logging.warning("No command received in 30 seconds. Exiting learning mode.")
 
 
 def replay(device, file):
