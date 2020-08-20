@@ -282,7 +282,7 @@ def record_rf(device, file):
         timeout -= 1
 
     if timeout <= 0:
-        logging.warn("RF Frequency not found")
+        logging.warning("RF Frequency not found")
         device.cancel_sweep_frequency()
         return
 
@@ -307,7 +307,7 @@ def record_rf(device, file):
             f.write(binascii.hexlify(rf_packet))
         logging.debug("Done")
     else:
-        logging.warn("No command received")
+        logging.warning("No command received")
 
 
 def replay(device, file):
@@ -612,7 +612,7 @@ if __name__ == '__main__':
             mqttc.connect(cf.get('mqtt_broker', 'localhost'), int(cf.get('mqtt_port', '1883')), 60)
             mqttc.loop_forever()
         except socket.error:
-            logging.warn("Cannot connect to MQTT server, will try to reconnect in 5 seconds")
+            logging.warning("Cannot connect to MQTT server, will try to reconnect in 5 seconds")
             time.sleep(5)
         except KeyboardInterrupt:
             sys.exit(0)
