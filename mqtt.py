@@ -256,9 +256,9 @@ def record(device, file):
     attempt = 0
     while ir_packet is None and attempt < 6:
         time.sleep(5)
-        ir_packet = device.check_data()
         attempt = attempt + 1
     if ir_packet is not None:
+        ir_packet = device.check_data()
         # write to file
         directory = os.path.dirname(file)
         if not os.path.exists(directory):
@@ -267,7 +267,7 @@ def record(device, file):
             f.write(binascii.hexlify(ir_packet))
         logging.debug("Done")
     else:
-        logging.warn("No command received")
+        logging.warning("No command received, exiting learning mode.")
 
 
 def record_rf(device, file):
