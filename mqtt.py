@@ -249,12 +249,11 @@ def record_or_replay_rf(device, file):
 
 def record(device, file):
     logging.debug("Recording IR command to file " + abspath(file))
-    logging.debug("Starting learning mode. Press a button on your remote controller entro 30 seconds.")
-    # receive packet
+    logging.debug("Starting learning mode. Press a button on your remote controller in 30 seconds.")
     device.enter_learning()
-    ir_packet = None
+    device.check_data()
     attempt = 0
-    while ir_packet is None and attempt < 6:
+    while ir_packet is None and attempt < 2:
         time.sleep(5)
         ir_packet = device.check_data()
         attempt = attempt + 1
