@@ -1,0 +1,4 @@
+custom.conf
+*.log
+__pycache__/
+commands/*
