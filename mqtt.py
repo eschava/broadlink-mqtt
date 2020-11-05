@@ -93,6 +93,7 @@ def on_message(client, device, msg):
 
     # internal notification
     if command == 'temperature' or \
+            command == 'humidity' or \
             command == 'energy' or \
             command == 'sensors' or \
             command == 'position' or \
@@ -479,6 +480,12 @@ def broadlink_rm_temperature_timer(scheduler, delay, device, mqtt_prefix):
         topic = mqtt_prefix + "temperature"
         logging.debug("Sending RM temperature " + temperature + " to topic " + topic)
         mqttc.publish(topic, temperature, qos=qos, retain=retain)
+
+        if device.type == 'RM4':
+            humidity = str(device.check_humidity())
+            topic = mqtt_prefix + "humidity"
+            logging.debug("Sending RM humidity " + humidity + " to topic " + topic)
+            mqttc.publish(topic, humidity, qos=qos, retain=retain)
     except:
         logging.exception("Error")
 

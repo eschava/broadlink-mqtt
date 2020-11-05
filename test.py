@@ -8,8 +8,13 @@ class TestDevice:
     def auth(self):
         pass
 
+    # RM2/RM4
     def check_temperature(self):
         return 23.5
+
+    # RM4
+    def check_humidity(self):
+        return 56
 
     def enter_learning(self):
         pass
