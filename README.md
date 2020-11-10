@@ -84,6 +84,9 @@ To stop the service:
 To restart the service:  
 `sudo systemctl restart broadlink-mqtt.service`
 
+# Known issues
+### Authentication failed
+This error means that device is registered in the phone app and cannot be used from broadlink-mqtt utility. To fix this you need to reset the device and use it with broadlink-mqtt only
 
 # RM2/RM3/RM4
 ### MQTT commands to control IR/RF
