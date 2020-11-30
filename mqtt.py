@@ -14,6 +14,8 @@ import binascii
 import types
 from threading import Thread
 from test import TestDevice
+from pathlib import Path
+from os.path import abspath
 
 HAVE_TLS = True
 try:
@@ -22,11 +24,12 @@ except ImportError:
     HAVE_TLS = False
 
 # read initial config files
-dirname = os.path.dirname(os.path.abspath(__file__)) + '/'
-logging.config.fileConfig(dirname + 'logging.conf')
-CONFIG = os.getenv('BROADLINKMQTTCONFIG', dirname + 'mqtt.conf')
-CONFIG_CUSTOM = os.getenv('BROADLINKMQTTCONFIGCUSTOM', dirname + 'custom.conf')
+dirname = os.getcwd()
 
+logging.config.fileConfig(Path(dirname) / 'logging.conf/')
+
+CONFIG = os.getenv('BROADLINKMQTTCONFIG', Path(dirname) / 'mqtt.conf/')
+CONFIG_CUSTOM = os.getenv('BROADLINKMQTTCONFIGCUSTOM', Path(dirname) / 'custom.conf')
 
 class Config(object):
     def __init__(self, filename=CONFIG, custom_filename=CONFIG_CUSTOM):
@@ -183,8 +186,9 @@ def on_message(client, device, msg):
 
         # RM2/RM4 record/replay control
         if device.type == 'RM2' or device.type == 'RM4':
-            file = dirname + "commands/" + command
-            handy_file = file + '/' + action
+            file = Path(dirname) / "commands/" / command
+            
+            handy_file = file / action
 
             if action == '' or action == 'auto':
                 record_or_replay(device, file)
@@ -205,7 +209,7 @@ def on_message(client, device, msg):
                 replay(device, file)
                 return
             elif action == 'macro':
-                file = dirname + "macros/" + command
+                file = Path(dirname) / "macros/" + command
                 macro(device, file)
                 return
 
@@ -245,14 +249,18 @@ def record_or_replay_rf(device, file):
 
 
 def record(device, file):
-    logging.debug("Recording command to file " + file)
+    logging.debug("Recording IR command to file " + abspath(file))
+    logging.debug("Starting learning mode. Press a button on your remote controller in 30 seconds.")
     # receive packet
     device.enter_learning()
     ir_packet = None
     attempt = 0
     while ir_packet is None and attempt < 6:
         time.sleep(5)
-        ir_packet = device.check_data()
+        try:
+            ir_packet = device.check_data()
+        except Exception as e: 
+            logging.warning(str(e) + '. Did you hit the IR remote button?')
         attempt = attempt + 1
     if ir_packet is not None:
         # write to file
@@ -261,13 +269,13 @@ def record(device, file):
             os.makedirs(directory)
         with open(file, 'wb') as f:
             f.write(binascii.hexlify(ir_packet))
-        logging.debug("Done")
+        logging.debug("Done. Created file " + abspath(file))
     else:
-        logging.warn("No command received")
+        logging.warning("No command received in 30 seconds. Exiting learning mode.")
 
 
 def record_rf(device, file):
-    logging.debug("Recording RF command to file " + file)
+    logging.debug("Recording RF command to file " + abspath(file))
     logging.debug("Learning RF Frequency, press and hold the button to learn...")
 
     device.sweep_frequency()
@@ -278,7 +286,7 @@ def record_rf(device, file):
         timeout -= 1
 
     if timeout <= 0:
-        logging.warn("RF Frequency not found")
+        logging.warning("RF Frequency not found")
         device.cancel_sweep_frequency()
         return
 
@@ -292,7 +300,10 @@ def record_rf(device, file):
     attempt = 0
     while rf_packet is None and attempt < 6:
         time.sleep(5)
-        rf_packet = device.check_data()
+        try:
+            rf_packet = device.check_data()
+        except Exception as e: 
+            logging.warning(str(e) + '. Did you hit the RF remote button?')
         attempt = attempt + 1
     if rf_packet is not None:
         # write to file
@@ -301,20 +312,20 @@ def record_rf(device, file):
             os.makedirs(directory)
         with open(file, 'wb') as f:
             f.write(binascii.hexlify(rf_packet))
-        logging.debug("Done")
+        logging.debug("Done. Created file " + abspath(file))
     else:
-        logging.warn("No command received")
+        logging.warning("No command received in 30 seconds. Exiting learning mode.")
 
 
 def replay(device, file):
-    logging.debug("Replaying command from file " + file)
+    logging.debug("Replaying command from file " + abspath(file))
     with open(file, 'rb') as f:
         ir_packet = f.read()
     device.send_data(binascii.unhexlify(ir_packet.strip()))
 
 
 def macro(device, file):
-    logging.debug("Replaying macro from file " + file)
+    logging.debug("Replaying macro from file " + abspath(file))
     with open(file, 'r') as f:
         for line in f:
             line = line.strip(' \n\r\t')
@@ -325,7 +336,7 @@ def macro(device, file):
                 logging.debug("Pause for " + str(pause) + " milliseconds")
                 time.sleep(pause / 1000.0)
             else:
-                command_file = dirname + "commands/" + line
+                command_file = Path(dirname) / "commands/" + line
                 replay(device, command_file)
 
 
@@ -614,7 +625,7 @@ if __name__ == '__main__':
             mqttc.connect(cf.get('mqtt_broker', 'localhost'), int(cf.get('mqtt_port', '1883')), 60)
             mqttc.loop_forever()
         except socket.error:
-            logging.warn("Cannot connect to MQTT server, will try to reconnect in 5 seconds")
+            logging.warning("Cannot connect to MQTT server, will try to reconnect in 5 seconds")
             time.sleep(5)
         except KeyboardInterrupt:
             sys.exit(0)
