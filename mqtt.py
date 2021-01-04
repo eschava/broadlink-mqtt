@@ -186,7 +186,11 @@ def on_message(client, device, msg):
             file = dirname + "commands/" + command
             handy_file = file + '/' + action
 
-            if action == '' or action == 'auto':
+            if command == 'macro':
+                file = dirname + "macros/" + action
+                macro(device, file)
+                return
+            elif action == '' or action == 'auto':
                 record_or_replay(device, file)
                 return
             elif action == 'autorf':
