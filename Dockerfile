@@ -30,7 +30,7 @@ VOLUME ["/opt/broadlink-mqtt/conf"]
 VOLUME ["/opt/broadlink-mqtt/commands/"]
 
 # set conf path
-ENV BROADLINKMQTTCONF="/opt/broadlink-mqtt/conf/mqtt.conf"
+ENV BROADLINKMQTTCONFIG="/opt/broadlink-mqtt/conf/mqtt.conf"
 ENV BROADLINKMQTTCONFIGCUSTOM="/opt/broadlink-mqtt/conf/custom.conf"
 
 # finally, copy the current code (ideally we'd copy only what we need, but it
