@@ -1,2 +1,2 @@
 paho-mqtt
-broadlink
+broadlink>=0.15.0

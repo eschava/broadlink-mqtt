@@ -363,8 +363,8 @@ def get_device(cf):
             mqtt_subprefix = mqtt_multiple_prefix_format.format(
                 type=device.type,
                 host=device.host[0],
-                mac='_'.join(format(s, '02x') for s in device.mac[::-1]),
-                mac_nic='_'.join(format(s, '02x') for s in device.mac[2::-1]))
+                mac='_'.join(format(s, '02x') for s in device.mac),
+                mac_nic='_'.join(format(s, '02x') for s in device.mac[3::]))
             device = configure_device(device, topic_prefix + mqtt_subprefix)
             devices_dict[mqtt_subprefix] = device
         return devices_dict
@@ -397,8 +397,8 @@ def get_device(cf):
 
 def configure_device(device, mqtt_prefix):
     device.auth()
-    logging.debug('Connected to \'%s\' Broadlink device at \'%s\' (MAC %s) and started listening for commands at MQTT topic having prefix \'%s\' '
-                  % (device.type, device.host[0], ':'.join(format(s, '02x') for s in device.mac[::-1]), mqtt_prefix))
+    logging.debug('Connected to \'%s\' Broadlink device at \'%s\' (MAC %s) and started listening to MQTT commands at \'%s#\' '
+                  % (device.type, device.host[0], ':'.join(format(s, '02x') for s in device.mac), mqtt_prefix))
 
     broadlink_rm_temperature_interval = cf.get('broadlink_rm_temperature_interval', 0)
     if (device.type == 'RM2' or device.type == 'RM4') and broadlink_rm_temperature_interval > 0:
