@@ -255,9 +255,12 @@ def record(device, file):
     ir_packet = None
     attempt = 0
     while ir_packet is None and attempt < 6:
-        time.sleep(5)
-        ir_packet = device.check_data()
         attempt = attempt + 1
+        time.sleep(5)
+        try:
+            ir_packet = device.check_data()
+        except (broadlink.exceptions.ReadError, broadlink.exceptions.StorageError):
+            continue
     if ir_packet is not None:
         # write to file
         directory = os.path.dirname(file)
@@ -267,7 +270,7 @@ def record(device, file):
             f.write(binascii.hexlify(ir_packet))
         logging.debug("Done")
     else:
-        logging.warn("No command received")
+        logging.warning("No command received")
 
 
 def record_rf(device, file):
