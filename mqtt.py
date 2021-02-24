@@ -254,7 +254,7 @@ def record(device, file):
     device.enter_learning()
     ir_packet = None
     attempt = 0
-    while ir_packet is None and attempt < 6:
+    while ir_packet is None and attempt < 8:
         attempt = attempt + 1
         time.sleep(5)
         try:
