@@ -1,45 +1,19 @@
 # MQTT client to control BroadLink devices
 
-- [Supported devices](#supported-devices)
-- [Installation](#installation)
-- [Configuration](#configuration)
-    + [Multiple devices configuration](#multiple-devices-configuration)
-- [Connect Broadlink device to wifi](#connect-broadlink-device-to-wifi)
-- [Start](#start)
-    + [Auto-startup (Linux)](#auto-startup--linux-)
-- [Error messages](#error-messages)
-
-
-- [RM2/RM3/RM4](#rm2-rm3-rm4)
-    + [MQTT commands to control IR/RF](#mqtt-commands-to-control-ir-rf)
-        - [Recording (IR or RF)](#recording--ir-or-rf-)
-        - [Replay](#replay)
-        - [Smart mode](#smart-mode)
-        - [Macros](#macros)
-    + [Subscription to current temperature (RM2/RM4 devices)](#subscription-to-current-temperature--rm2-rm4-devices-)
-- [SP1/SP2](#sp1-sp2)
-    + [MQTT commands to control power](#mqtt-commands-to-control-power)
-    + [Subscription to current used energy (SP2 device)](#subscription-to-current-used-energy--sp2-device-)
-- [A1](#a1)
-    + [Subscription to current sensors data](#subscription-to-current-sensors-data)
-- [MP1](#mp1)
-    + [MQTT commands to control power](#mqtt-commands-to-control-power-1)
-    + [Subscription to current state](#subscription-to-current-state)
-- [Dooya DT360E](#dooya-dt360e)
-    + [MQTT commands to control curtain motor](#mqtt-commands-to-control-curtain-motor)
-    + [Subscription to current curtain position](#subscription-to-current-curtain-position)
-- [BG1](#bg1)
-    + [MQTT commands to control](#mqtt-commands-to-control)
-    + [Subscription to current state](#subscription-to-current-state-1)
-
-
-## Supported devices
-   * [**RM Pro / RM2 / RM3 mini / RM4**](#rm2rm3rm4) IR/RF controllers (device_type = 'rm' or 'rm4')  
-   * [**SP1/SP2**](#sp1sp2) smart plugs (device_type = 'sp1' or 'sp2')  
-   * [**A1**](#a1) sensor (device_type = 'a1')  
-   * [**MP1**](#mp1) power strip (device_type = 'mp1')  
-   * [**Dooya DT360E**](#dooya-dt360e) curtain motor (device_type = 'dooya')  
-   * [**BG1**](#bg1) BG smart socket (device_type = 'bg1')  
+* Supported devices
+    * [**RM Pro / RM2 / RM3 mini / RM4**](#rm2rm3rm4) IR/RF controllers (device_type = 'rm' or 'rm4')
+    * [**SP1/SP2**](#sp1sp2) smart plugs (device_type = 'sp1' or 'sp2')
+    * [**A1**](#a1) sensor (device_type = 'a1')
+    * [**MP1**](#mp1) power strip (device_type = 'mp1')
+    * [**Dooya DT360E**](#dooya-dt360e) curtain motor (device_type = 'dooya')
+    * [**BG1**](#bg1) BG smart socket (device_type = 'bg1')
+* [Installation](#installation)
+* [Configuration](#configuration)
+    * [Multiple devices configuration](#multiple-devices-configuration)
+* [Connect Broadlink device to wifi](#connect-broadlink-device-to-wifi)
+* [Start](#start)
+    * [Auto-startup (Linux)](#auto-startup--linux-)
+* [Error messages](#error-messages)
 
  
 ## Installation
