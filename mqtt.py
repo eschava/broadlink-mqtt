@@ -108,7 +108,7 @@ def on_message(client, device, msg):
 
         # SP1/2 / MP1/ BG1 power control
         if command == 'power':
-            if device.type == 'SP1' or device.type == 'SP2':
+            if device.type == 'SP1' or device.type == 'SP2' or device.type == 'SP3S':
                 state = action == 'on' or action == '1'
                 logging.debug("Setting power state to {0}".format(state))
                 device.set_power(1 if state else 0)
@@ -384,6 +384,8 @@ def get_device(cf):
             device = broadlink.sp1(host=host, mac=mac, devtype=0)
         elif device_type == 'sp2':
             device = broadlink.sp2(host=host, mac=mac, devtype=0x2711)
+        elif device_type == 'sp3s':
+            device = broadlink.sp3s(host=host, mac=mac, devtype=0x947a)
         elif device_type == 'a1':
             device = broadlink.a1(host=host, mac=mac, devtype=0x2714)
         elif device_type == 'mp1':
@@ -414,7 +416,7 @@ def configure_device(device, mqtt_prefix):
         tt.start()
 
     broadlink_sp_energy_interval = cf.get('broadlink_sp_energy_interval', 0)
-    if device.type == 'SP2' and broadlink_sp_energy_interval > 0:
+    if (device.type == 'SP2' or device.type == 'SP3S') and broadlink_sp_energy_interval > 0:
         scheduler = sched.scheduler(time.time, time.sleep)
         scheduler.enter(broadlink_sp_energy_interval, 1, broadlink_sp_energy_timer,
                         [scheduler, broadlink_sp_energy_interval, device, mqtt_prefix])
