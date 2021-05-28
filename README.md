@@ -45,6 +45,12 @@ Format supports next placeholders:
    * `{mac}` - MAC address of the device  
    * `{mac_nic}` - last 3 octets of the MAC address (NIC)  
 
+## Connect Broadlink device to wifi
+You need to use the [Broadlink e-control app](https://play.google.com/store/apps/details?id=com.broadlink.rmt) or [Broadlink Intelligent Home Center](https://play.google.com/store/apps/details?id=cn.com.broadlink.econtrol.plus) to get the device connected to wifi. **Don't use** [BroadLink -Universal TV Remote](https://play.google.com/store/apps/details?id=cn.com.broadlink.econtrol.international), as it is known to lock devices. Other apps have not been tested.
+
+Press the reset-button for 5+ seconds till the led starts flashing continuously. Now it is in "smart mode". Go to the `e-control` or `Intelligent home Center` app and add a new device. Fill in the wifi-credentials and start scanning while staying close to the device. When the led starts flashing slower, it is discovered. When the led turns off, it is configured.
+
+You (theoretically) can configure multiple devices at one.
 
 ## Start
 Just start `mqtt.py` script using Python interpreter. You may have to use `python3`.
@@ -199,3 +205,12 @@ E.g.
 `broadlink_bg1_state_interval`=120  
 means current state will be published to topics `broadlink/state/[pwr/pwr1/pwr2/maxworktime/maxworktime1/maxworktime2/idcbrightness]` every 2 minutes    
 
+## Error messages
+- **ERROR No Broadlink devices found**: No wifi-device on the network is a Broadlink device recognized by the library. If you see a device connected to your wifi that starts with the device type, like "RM4-44-b6-a2" for a RM4, then it could be that the device is not supported yet. If you see no device connected (which is in most cases), make sure it is connected to your wifi network.
+- **broadlink.exceptions.AuthenticationError: Authentication failed**: The device is locked by an app. Use the instructions above to reset the device and connect it to wifi without lock.
+- **with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s: AttributeError: __exit__**: this library requires Python3, and you used Python2. Start the library with `python3 ./mqtt.py`.
+- **ERROR MQTT topic broadlink/RMx_xx_xx_xx/projector/power has no recognized device reference, expected one of RMy_yy_yy_yy/**: replace the device ID `RMx_xx_xx_xx` with `RMy_yy_yy_yy` in your mqtt-command.
+- **FileNotFoundError: [Errno 2] No such file or directory: '/opt/broadlink-mqtt/commands/projector/power'**: You need to manually create a directory per device.
+- **WARNING OOOOPS! MQTT disconnection**: It happens
+
+If you think you see reasons to improve the library, you are very welcome to contribute!
