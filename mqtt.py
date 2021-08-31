@@ -182,7 +182,7 @@ def on_message(client, device, msg):
             return
 
         # RM2/RM4 record/replay control
-        if device.type == 'RM2' or device.type == 'RM4' or device.type == 'RMMINI' or device.type == 'RM4MINI' or device.type == 'RMMINIB':
+        if device.type == 'RM2' or device.type == 'RM4' or device.type == 'RMMINI' or device.type == 'RM4MINI' or device.type == 'RMMINIB' or device.type == 'RMPRO':
             file = dirname + "commands/" + command
             handy_file = file + '/' + action
 
