@@ -593,7 +593,15 @@ class SchedulerThread(Thread):
 
 
 if __name__ == '__main__':
-    devices = get_device(cf)
+    devices = None
+
+    while True:
+        try:
+            devices = get_device(cf)
+            break
+        except SystemExit:
+            logging.error('Could not get Broadlink device. Trying again...')
+            time.sleep(1)
 
     clientid = cf.get('mqtt_clientid', 'broadlink-%s' % os.getpid())
     # initialise MQTT broker connection
