@@ -490,7 +490,7 @@ def broadlink_rm_temperature_timer(scheduler, delay, device, mqtt_prefix):
         logging.debug("Sending RM temperature " + temperature + " to topic " + topic)
         mqttc.publish(topic, temperature, qos=qos, retain=retain)
 
-        if device.type == 'RM4':
+        if device.type in ('RM4', 'RM4PRO'):
             humidity = str(device.check_humidity())
             topic = mqtt_prefix + "humidity"
             logging.debug("Sending RM humidity " + humidity + " to topic " + topic)
