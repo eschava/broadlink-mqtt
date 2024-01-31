@@ -620,10 +620,13 @@ if __name__ == '__main__':
 
     while True:
         try:
-            mqttc.connect(cf.get('mqtt_broker', 'localhost'), int(cf.get('mqtt_port', '1883')), 60)
+            mqttc.connect(cf.get('mqtt_broker', 'localhost'),
+                          port=int(cf.get('mqtt_port', '1883')),
+                          keepalive=60,
+                          bind_address=cf.get('mqtt_bind', ''))
             mqttc.loop_forever()
         except socket.error:
-            logging.warn("Cannot connect to MQTT server, will try to reconnect in 5 seconds")
+            logging.warning("Cannot connect to MQTT server, will try to reconnect in 5 seconds")
             time.sleep(5)
         except KeyboardInterrupt:
             sys.exit(0)
