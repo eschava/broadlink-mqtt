@@ -52,6 +52,10 @@ Format supports next placeholders:
    * `{mac}` - MAC address of the device  
    * `{mac_nic}` - last 3 octets of the MAC address (NIC)  
 
+If you want send commands for all devices on network, you can send the "broadcast MAC" on topic, for example:
+`broadlink/ff_ff_ff_ff_ff_ff/`
+This prossibility just work if `mqtt_multiple_subprefix_format'` was `{mac}/'`
+
 ## Connect Broadlink device to wifi
 You need to use the [Broadlink e-control app](https://play.google.com/store/apps/details?id=com.broadlink.rmt) or [Broadlink Intelligent Home Center](https://play.google.com/store/apps/details?id=cn.com.broadlink.econtrol.plus) to get the device connected to wifi. **Don't use** [BroadLink -Universal TV Remote](https://play.google.com/store/apps/details?id=cn.com.broadlink.econtrol.international), as it is known to lock devices. Other apps have not been tested.
 

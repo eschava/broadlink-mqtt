@@ -79,8 +79,13 @@ topic_prefix = cf.get('mqtt_topic_prefix', 'broadlink/')
 # noinspection PyUnusedLocal
 def on_message(client, device, msg):
     command = msg.topic[len(topic_prefix):]
+    is_broadcast = False
+    broadcast_mac = "ff_ff_ff_ff_ff_ff/"
 
-    if isinstance(device, dict):
+    if command.startswith(broadcast_mac):
+        command = command[len(broadcast_mac):]
+        is_broadcast = True
+    elif isinstance(device, dict):
         for subprefix in device:
             if command.startswith(subprefix):
                 device = device[subprefix]
@@ -103,120 +108,127 @@ def on_message(client, device, msg):
         return
 
     try:
-        action = msg.payload.decode('utf-8').lower()
-        logging.debug("Received MQTT message " + msg.topic + " " + action)
+        if is_broadcast: # if is broadcast, send message for all devices
+            for dev in device.values():
+                exec_command_message(command, dev, msg)
+        else:
+            exec_command_message(command, device, msg)
 
-        # SP1/2 / MP1/ BG1 power control
-        if command == 'power':
-            if device.type == 'SP1' or device.type == 'SP2' or device.type == 'SP3S':
-                state = action == 'on' or action == '1'
-                logging.debug("Setting power state to {0}".format(state))
-                device.set_power(1 if state else 0)
-                return
-
-            if device.type == 'MP1':
-                parts = action.split("/", 2)
-                if len(parts) == 2:
-                    sid = int(parts[0])
-                    state = parts[1] == 'on' or parts[1] == '1'
-                    logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
-                    device.set_power(sid, state)
-                    return
-
-            if device.type == 'BG1':
-                state = action == 'on' or action == '1'
-                logging.debug("Setting power state of all sockets to {0}".format(state))
-                device.set_state(pwr1=state, pwr2=state)
-                return
-
-        # MP1 power control
-        if command.startswith('power/') and device.type == 'MP1':
-            sid = int(command[6:])
-            state = action == 'on' or action == '1'
-            logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
-            device.set_power(sid, state)
-            return
-
-        # BG1 power control
-        if command.startswith('power/') and device.type == 'BG1':
-            sid = int(command[6:])
-            state = action == 'on' or action == '1'
-            logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
-            if sid == 1:
-                device.set_state(pwr1=state)
-            elif sid == 2:
-                 device.set_state(pwr2=state)
-            return
-
-        # BG1 led brightness
-        if command == 'brightness' and device.type == 'BG1':
-            state = int(action)
-            logging.debug("Setting led brightness to {0}".format(state))
-            device.set_state(idcbrightness=state)
-            return
-
-        # Dooya curtain control
-        if command == 'action':
-            if device.type == 'Dooya DT360E':
-                if action == 'open':
-                    logging.debug("Opening curtain")
-                    device.open()
-                    device.publish(100)
-                elif action == 'close':
-                    logging.debug("Closing curtain")
-                    device.close()
-                    device.publish(0)
-                elif action == 'stop':
-                    logging.debug("Stopping curtain")
-                    device.stop()
-                    device.publish(device.get_percentage())
-                else:
-                    logging.warning("Unrecognized curtain action " + action)
-                return
-
-        if command == 'set' and device.type == 'Dooya DT360E':
-            percentage = int(action)
-            logging.debug("Setting curtain position to {0}".format(percentage))
-            device.set_percentage_and_wait(percentage)
-            device.publish(device.get_percentage())
-            return
-
-        # RM2/RM4 record/replay control
-        if device.type == 'RM2' or device.type == 'RM4' or device.type == 'RM4PRO' or device.type == 'RMMINI' or device.type == 'RM4MINI' or device.type == 'RMMINIB' or device.type == 'RMPRO':
-            file = dirname + "commands/" + command
-            handy_file = file + '/' + action
-
-            if command == 'macro':
-                file = dirname + "macros/" + action
-                macro(device, file)
-                return
-            elif action == '' or action == 'auto':
-                record_or_replay(device, file)
-                return
-            elif action == 'autorf':
-                record_or_replay_rf(device, file)
-                return
-            elif os.path.isfile(handy_file):
-                replay(device, handy_file)
-                return
-            elif action == 'record':
-                record(device, file)
-                return
-            elif action == 'recordrf':
-                record_rf(device, file)
-                return
-            elif action == 'replay':
-                replay(device, file)
-                return
-            elif action == 'macro':
-                file = dirname + "macros/" + command
-                macro(device, file)
-                return
-
-        logging.warning("Unrecognized MQTT message " + action)
     except Exception:
         logging.exception("Error")
 
+def exec_command_message(command, device, msg):
+    action = msg.payload.decode('utf-8').lower()
+    logging.debug("Received MQTT message " + msg.topic + " " + action)
+
+    # SP1/2 / MP1/ BG1 power control
+    if command == 'power':
+        if device.type == 'SP1' or device.type == 'SP2' or device.type == 'SP3S':
+            state = action == 'on' or action == '1'
+            logging.debug("Setting power state to {0}".format(state))
+            device.set_power(1 if state else 0)
+            return
+
+        if device.type == 'MP1':
+            parts = action.split("/", 2)
+            if len(parts) == 2:
+                sid = int(parts[0])
+                state = parts[1] == 'on' or parts[1] == '1'
+                logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
+                device.set_power(sid, state)
+                return
+
+        if device.type == 'BG1':
+            state = action == 'on' or action == '1'
+            logging.debug("Setting power state of all sockets to {0}".format(state))
+            device.set_state(pwr1=state, pwr2=state)
+            return
+
+    # MP1 power control
+    if command.startswith('power/') and device.type == 'MP1':
+        sid = int(command[6:])
+        state = action == 'on' or action == '1'
+        logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
+        device.set_power(sid, state)
+        return
+
+    # BG1 power control
+    if command.startswith('power/') and device.type == 'BG1':
+        sid = int(command[6:])
+        state = action == 'on' or action == '1'
+        logging.debug("Setting power state of socket {0} to {1}".format(sid, state))
+        if sid == 1:
+            device.set_state(pwr1=state)
+        elif sid == 2:
+                device.set_state(pwr2=state)
+        return
+
+    # BG1 led brightness
+    if command == 'brightness' and device.type == 'BG1':
+        state = int(action)
+        logging.debug("Setting led brightness to {0}".format(state))
+        device.set_state(idcbrightness=state)
+        return
+
+    # Dooya curtain control
+    if command == 'action':
+        if device.type == 'Dooya DT360E':
+            if action == 'open':
+                logging.debug("Opening curtain")
+                device.open()
+                device.publish(100)
+            elif action == 'close':
+                logging.debug("Closing curtain")
+                device.close()
+                device.publish(0)
+            elif action == 'stop':
+                logging.debug("Stopping curtain")
+                device.stop()
+                device.publish(device.get_percentage())
+            else:
+                logging.warning("Unrecognized curtain action " + action)
+            return
+
+    if command == 'set' and device.type == 'Dooya DT360E':
+        percentage = int(action)
+        logging.debug("Setting curtain position to {0}".format(percentage))
+        device.set_percentage_and_wait(percentage)
+        device.publish(device.get_percentage())
+        return
+
+    # RM2/RM4 record/replay control
+    if device.type == 'RM2' or device.type == 'RM4' or device.type == 'RM4PRO' or device.type == 'RMMINI' or device.type == 'RM4MINI' or device.type == 'RMMINIB' or device.type == 'RMPRO':
+        file = dirname + "commands/" + command
+        handy_file = file + '/' + action
+
+        if command == 'macro':
+            file = dirname + "macros/" + action
+            macro(device, file)
+            return
+        elif action == '' or action == 'auto':
+            record_or_replay(device, file)
+            return
+        elif action == 'autorf':
+            record_or_replay_rf(device, file)
+            return
+        elif os.path.isfile(handy_file):
+            replay(device, handy_file)
+            return
+        elif action == 'record':
+            record(device, file)
+            return
+        elif action == 'recordrf':
+            record_rf(device, file)
+            return
+        elif action == 'replay':
+            replay(device, file)
+            return
+        elif action == 'macro':
+            file = dirname + "macros/" + command
+            macro(device, file)
+            return
+
+    logging.warning("Unrecognized MQTT message " + action)
 
 # noinspection PyUnusedLocal
 def on_connect(client, device, flags, result_code):
