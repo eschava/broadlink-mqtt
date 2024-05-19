@@ -597,7 +597,7 @@ if __name__ == '__main__':
 
     clientid = cf.get('mqtt_clientid', 'broadlink-%s' % os.getpid())
     # initialise MQTT broker connection
-    mqttc = paho.Client(clientid, clean_session=cf.get('mqtt_clean_session', False), userdata=devices)
+    mqttc = paho.Client(paho.CallbackAPIVersion.VERSION1, clientid, clean_session=cf.get('mqtt_clean_session', False), userdata=devices)
 
     mqttc.on_message = on_message
     mqttc.on_connect = on_connect
